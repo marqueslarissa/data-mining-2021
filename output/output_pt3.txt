@@ -1,0 +1,187 @@
+---------------------------------------Table: Interacao---------------------------------------
+
+Statistics Numeric Columns: 
+             impact       urgency      priority  handle_time_secs_
+count  52269.000000  52269.000000  52269.000000       52269.000000
+mean       4.182479      4.182039      4.173296         469.291798
+std        0.709612      0.714333      0.711453         487.228095
+min        1.000000      1.000000      1.000000           0.000000
+25%        4.000000      4.000000      4.000000         186.000000
+50%        4.000000      4.000000      4.000000         348.000000
+75%        5.000000      5.000000      5.000000         608.000000
+max        5.000000      5.000000      5.000000       21292.000000
+
+Statistics Categorial Columns: 
+       ci_name_aff_ ci_type_aff_           ci_subtype_aff_  \
+count         52269        52269                     52269   
+unique         2437           14                        64   
+top       sub000456  application  server based application   
+freq           3406        37573                     20960   
+
+       service_component_wbs_aff_ interaction_id  status  category  km_number  \
+count                       52269          52269   52269     52269      52269   
+unique                        272          52269       2         4       1847   
+top                     wbs000073      sd0000001  closed  incident  km0001106   
+freq                        15494              1   52263     41241       1240   
+
+       open_time_first_touch_           close_time closure_code  \
+count                   52269                52269        52269   
+unique                  37645                34571           16   
+top       2013-03-10 11:12:00  2013-11-25 12:02:00        other   
+freq                        9                   55        18227   
+
+       first_call_resolution related_incident  
+count                  52269            52269  
+unique                     2            45616  
+top                        n      #multivalue  
+freq                   52233              873  
+
+---------------------------------------Table: Incidente---------------------------------------
+
+Statistics Numeric Columns: 
+             impact       urgency      priority  #_reassignments  \
+count  44825.000000  44825.000000  44825.000000     44825.000000   
+mean       4.215482      4.217624      4.207697         1.144941   
+std        0.700062      0.699718      0.700583         2.289054   
+min        1.000000      1.000000      1.000000         0.000000   
+25%        4.000000      4.000000      4.000000         0.000000   
+50%        4.000000      4.000000      4.000000         0.000000   
+75%        5.000000      5.000000      5.000000         2.000000   
+max        5.000000      5.000000      5.000000        46.000000   
+
+       handle_time_hours_  #_related_interactions  
+count        44825.000000            44825.000000  
+mean            25.579810                1.148132  
+std            110.650378                2.568213  
+min              0.000000                1.000000  
+25%              0.000000                1.000000  
+50%              3.000000                1.000000  
+75%             16.000000                1.000000  
+max           4843.000000              370.000000  
+
+Statistics Categorial Columns: 
+       ci_name_aff_ ci_type_aff_           ci_subtype_aff_  \
+count         44825        44825                     44825   
+unique         2725           13                        64   
+top       sub000456  application  server based application   
+freq           3014        31884                     18114   
+
+       service_component_wbs_aff_ incident_id  status  category  km_number  \
+count                       44825       44825   44825     44825      44825   
+unique                        272       44825       2         3       1808   
+top                     wbs000073   im0000004  closed  incident  km0001106   
+freq                        13148           1   44816     36095       1100   
+
+       alert_status            open_time        resolved_time  \
+count         44825                44825                44825   
+unique            1                44571                44602   
+top          closed  2014-01-22 15:46:06  2013-11-22 16:34:33   
+freq          44825                    3                    3   
+
+                 close_time closure_code related_interaction ci_name_cby_  \
+count                 44825        44825               44825        44825   
+unique                44605           14               41402         3586   
+top     2014-02-27 15:04:32        other         #multivalue    sub000456   
+freq                      3        16148                3311         2928   
+
+       ci_type_cby_           ci_subtype_cby_ servicecomp_wbs_cby_  
+count         44825                     44825                44825  
+unique           14                        62                  275  
+top     application  server based application            wbs000073  
+freq          28889                     16216                13020  
+
+---------------------------------------Table: Atividades Interacao---------------------------------------
+
+Statistics Categorial Columns: 
+       incident_id            datestamp incidentactivity_number  \
+count       466737               466737                  466737   
+unique       46616                87175                  466737   
+top      im0000428  2013-12-23 14:43:00             001a3689763   
+freq           178                   34                       1   
+
+       incidentactivity_type assignment_group  km_number interaction_id  
+count                 466737           466737     466737         466737  
+unique                    39              242       1825          46444  
+top               assignment         team0008  km0001106           #n/b  
+freq                   88502            84143      17638           5643  
+
+---------------------------------------Table: Mudancas---------------------------------------
+
+Statistics Categorial Columns: 
+       ci_name_aff_ ci_type_aff_           ci_subtype_aff_  \
+count         27011        27011                     27011   
+unique         8778           13                        73   
+top       net000425     computer  server based application   
+freq            731         8947                      4118   
+
+       service_component_wbs_aff_  change_id              change_type  \
+count                       27011      27011                    27011   
+unique                        282      16687                      233   
+top                     wbs000102  c00001334  standard change type 81   
+freq                         3957        127                     1563   
+
+       risk_assessment emergency_change cab_approval_needed  \
+count            27011            27011               27011   
+unique               3                2                   2   
+top       minor change                n                   n   
+freq             25473            26923               26276   
+
+              planned_start          planned_end         actual_start  \
+count                 27011                27011                27011   
+unique                11317                 8536                13097   
+top     2013-09-27 21:00:00  2013-11-01 18:00:00  2013-09-30 00:00:00   
+freq                    127                  165                  134   
+
+                 actual_end   requested_end_date change_record_open_time  \
+count                 27011                27011                   27011   
+unique                13779                 6322                   14191   
+top     2013-10-31 16:46:00  2014-01-31 00:00:00     2013-09-18 15:26:00   
+freq                    127                  270                     127   
+
+       change_record_close_time originated_from  
+count                     27011           27011  
+unique                    14730               3  
+top         2013-10-31 16:47:00         problem  
+freq                        127           16882  
+
+---------------------------------------RAW Table: Merged Interacao + Incidente---------------------------------------
+
+Before Missing Values
+               0          1
+index      94453  14.299145
+km_number    203   0.030732
+After Missing Values
+           0    1
+index      0  0.0
+km_number  0  0.0
+
+Percent missing value removed: 14.30%
+
+Attributes type
+index        object
+km_number    object
+dtype: object
+
+Categorial Column ' index ' Unique Values:
+ <StringArray>
+['im0000004', 'im0000005', 'im0000006', 'im0000011', 'im0000012', 'im0000013',
+ 'im0000014', 'im0000015', 'im0000017', 'im0000018',
+ ...
+ 'im0046706', 'im0044047', 'im0044397', 'im0046791', 'im0046828', 'im0046917',
+ 'im0045758', 'im0046944', 'im0046938', 'im0045925']
+Length: 47058, dtype: string
+
+Categorial Column ' km_number ' Unique Values:
+ <StringArray>
+['km0000553', 'km0000611', 'km0000339', 'km0000401', 'km0000670', 'km0000852',
+ 'km0000928', 'km0001430', 'km0000579', 'km0000931',
+ ...
+ 'km0002174', 'km0000373', 'km0001434', 'km0002221', 'km0002282', 'km0000390',
+ 'km0001222', 'km0000781', 'km0002372', 'km0002371']
+Length: 1862, dtype: string
+
+Attributes type
+index        string
+km_number    string
+dtype: object
+
