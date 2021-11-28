@@ -144,44 +144,145 @@ unique                    14730               3
 top         2013-10-31 16:47:00         problem  
 freq                        127           16882  
 
----------------------------------------RAW Table: Merged Interacao + Incidente---------------------------------------
+
+Info after RAW merge:
+
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 596372 entries, 0 to 596371
+Data columns (total 100 columns):
+ #   Column                      Non-Null Count   Dtype  
+---  ------                      --------------   -----  
+ 0   change_id                   30835 non-null   object 
+ 1   incident_id                 566097 non-null  object 
+ 2   ci_name_aff_                129635 non-null  object 
+ 3   ci_type_aff_                129635 non-null  object 
+ 4   ci_subtype_aff_             129635 non-null  object 
+ 5   service_component_wbs_aff_  129635 non-null  object 
+ 6   status                      99360 non-null   object 
+ 7   impact                      99360 non-null   float64
+ 8   urgency                     99360 non-null   object 
+ 9   priority                    99360 non-null   float64
+ 10  category                    99360 non-null   object 
+ 11  km_number                   566097 non-null  object 
+ 12  alert_status                46606 non-null   object 
+ 13  #_reassignments             46605 non-null   float64
+ 14  open_time                   46606 non-null   object 
+ 15  reopen_time                 2284 non-null    object 
+ 16  resolved_time               44826 non-null   object 
+ 17  close_time                  99360 non-null   object 
+ 18  handle_time_hours_          46605 non-null   object 
+ 19  closure_code                98415 non-null   object 
+ 20  #_related_interactions      46494 non-null   float64
+ 21  related_interaction         46606 non-null   object 
+ 22  #_related_incidents         3170 non-null    float64
+ 23  #_related_changes           560 non-null     float64
+ 24  ci_name_cby_                46606 non-null   object 
+ 25  ci_type_cby_                46606 non-null   object 
+ 26  ci_subtype_cby_             46606 non-null   object 
+ 27  servicecomp_wbs_cby_        46606 non-null   object 
+ 28  unnamed_28                  0 non-null       float64
+ 29  unnamed_29                  0 non-null       float64
+ 30  unnamed_30                  0 non-null       float64
+ 31  unnamed_31                  0 non-null       float64
+ 32  unnamed_32                  0 non-null       float64
+ 33  unnamed_33                  0 non-null       float64
+ 34  unnamed_34                  0 non-null       float64
+ 35  unnamed_35                  0 non-null       float64
+ 36  unnamed_36                  0 non-null       float64
+ 37  unnamed_37                  0 non-null       float64
+ 38  unnamed_38                  0 non-null       float64
+ 39  unnamed_39                  0 non-null       float64
+ 40  unnamed_40                  0 non-null       float64
+ 41  unnamed_41                  0 non-null       float64
+ 42  unnamed_42                  0 non-null       float64
+ 43  unnamed_43                  0 non-null       float64
+ 44  unnamed_44                  0 non-null       float64
+ 45  unnamed_45                  0 non-null       float64
+ 46  unnamed_46                  0 non-null       float64
+ 47  unnamed_47                  0 non-null       float64
+ 48  unnamed_48                  0 non-null       float64
+ 49  unnamed_49                  0 non-null       float64
+ 50  unnamed_50                  0 non-null       float64
+ 51  unnamed_51                  0 non-null       float64
+ 52  unnamed_52                  0 non-null       float64
+ 53  unnamed_53                  0 non-null       float64
+ 54  unnamed_54                  0 non-null       float64
+ 55  unnamed_55                  0 non-null       float64
+ 56  unnamed_56                  0 non-null       float64
+ 57  unnamed_57                  0 non-null       float64
+ 58  unnamed_58                  0 non-null       float64
+ 59  unnamed_59                  0 non-null       float64
+ 60  unnamed_60                  0 non-null       float64
+ 61  unnamed_61                  0 non-null       float64
+ 62  unnamed_62                  0 non-null       float64
+ 63  unnamed_63                  0 non-null       float64
+ 64  unnamed_64                  0 non-null       float64
+ 65  unnamed_65                  0 non-null       float64
+ 66  unnamed_66                  0 non-null       float64
+ 67  unnamed_67                  0 non-null       float64
+ 68  unnamed_68                  0 non-null       float64
+ 69  unnamed_69                  0 non-null       float64
+ 70  unnamed_70                  0 non-null       float64
+ 71  unnamed_71                  0 non-null       float64
+ 72  unnamed_72                  0 non-null       float64
+ 73  unnamed_73                  0 non-null       float64
+ 74  unnamed_74                  0 non-null       float64
+ 75  unnamed_75                  0 non-null       float64
+ 76  unnamed_76                  0 non-null       float64
+ 77  unnamed_77                  0 non-null       float64
+ 78  interaction_id              519491 non-null  object 
+ 79  open_time_first_touch_      52754 non-null   object 
+ 80  first_call_resolution       52754 non-null   object 
+ 81  handle_time_secs_           52754 non-null   float64
+ 82  datestamp                   466737 non-null  object 
+ 83  incidentactivity_number     466737 non-null  object 
+ 84  incidentactivity_type       466737 non-null  object 
+ 85  assignment_group            466737 non-null  object 
+ 86  change_type                 30275 non-null   object 
+ 87  risk_assessment             30275 non-null   object 
+ 88  emergency_change            30275 non-null   object 
+ 89  cab_approval_needed         30275 non-null   object 
+ 90  planned_start               30275 non-null   object 
+ 91  planned_end                 30232 non-null   object 
+ 92  scheduled_downtime_start    755 non-null     object 
+ 93  scheduled_downtime_end      744 non-null     object 
+ 94  actual_start                27017 non-null   object 
+ 95  actual_end                  27014 non-null   object 
+ 96  requested_end_date          30275 non-null   object 
+ 97  change_record_open_time     30275 non-null   object 
+ 98  change_record_close_time    30275 non-null   object 
+ 99  originated_from             30275 non-null   object 
+dtypes: float64(57), object(43)
+memory usage: 455.0+ MB
+
+
+---------------------------------------RAW Table: Merged Interacao + Incidente + Atividade Incidente + Mudancas ---------------------------------------
 
 Before Missing Values
-               0          1
-index      94453  14.299145
-km_number    203   0.030732
+                               0          1
+change_id                 565537  94.829569
+incident_id                30275   5.076529
+ci_name_aff_              466737  78.262729
+ci_type_aff_              466737  78.262729
+ci_subtype_aff_           466737  78.262729
+...                          ...        ...
+actual_end                569358  95.470277
+requested_end_date        566097  94.923471
+change_record_open_time   566097  94.923471
+change_record_close_time  566097  94.923471
+originated_from           566097  94.923471
+
+[100 rows x 2 columns]
+
 After Missing Values
-           0    1
-index      0  0.0
-km_number  0  0.0
+                         0    1
+incident_id              0  0.0
+km_number                0  0.0
+interaction_id           0  0.0
+datestamp                0  0.0
+incidentactivity_number  0  0.0
+incidentactivity_type    0  0.0
+assignment_group         0  0.0
 
-Percent missing value removed: 14.30%
-
-Attributes type
-index        object
-km_number    object
-dtype: object
-
-Categorial Column ' index ' Unique Values:
- <StringArray>
-['im0000004', 'im0000005', 'im0000006', 'im0000011', 'im0000012', 'im0000013',
- 'im0000014', 'im0000015', 'im0000017', 'im0000018',
- ...
- 'im0046706', 'im0044047', 'im0044397', 'im0046791', 'im0046828', 'im0046917',
- 'im0045758', 'im0046944', 'im0046938', 'im0045925']
-Length: 47058, dtype: string
-
-Categorial Column ' km_number ' Unique Values:
- <StringArray>
-['km0000553', 'km0000611', 'km0000339', 'km0000401', 'km0000670', 'km0000852',
- 'km0000928', 'km0001430', 'km0000579', 'km0000931',
- ...
- 'km0002174', 'km0000373', 'km0001434', 'km0002221', 'km0002282', 'km0000390',
- 'km0001222', 'km0000781', 'km0002372', 'km0002371']
-Length: 1862, dtype: string
-
-Attributes type
-index        string
-km_number    string
-dtype: object
+Percent missing value removed: 21.74%
 

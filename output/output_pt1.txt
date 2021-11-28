@@ -19,6 +19,7 @@ closure_code                  487   0.331284
 first_call_resolution           0   0.000000
 handle_time_secs_               0   0.000000
 related_incident            94250  64.113902
+
 After Missing Values
                             0    1
 ci_name_aff_                0  0.0
@@ -58,6 +59,7 @@ unnamed_76                  46809  100.000000
 unnamed_77                  46809  100.000000
 
 [78 rows x 2 columns]
+
 After Missing Values
                             0    1
 ci_name_aff_                0  0.0
@@ -98,6 +100,7 @@ incidentactivity_type    0  0.0
 assignment_group         0  0.0
 km_number                0  0.0
 interaction_id           0  0.0
+
 After Missing Values
                          0    1
 incident_id              0  0.0
@@ -135,6 +138,7 @@ change_record_close_time        0   0.000000
 originated_from                 0   0.000000
 #_related_interactions      30273  99.993394
 #_related_incidents         28327  93.565648
+
 After Missing Values
                             0    1
 ci_name_aff_                0  0.0

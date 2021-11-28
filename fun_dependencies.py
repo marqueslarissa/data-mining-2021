@@ -6,6 +6,8 @@ import numpy as np
 import janitor
 import datetime as dt
 import re
+import missingno as ms
+import matplotlib.pyplot as plt
 
 
 def load_data(filepath, sep):
@@ -38,14 +40,14 @@ def categorial(df):
 
 
 
-def missing_treatment(df, drop, fill):
+def missing_treatment(df, drop, fill, threshold):
     rows_before = df.shape[0]
     before = pd.concat([df.isna().sum(), df.isna().sum()/len(df)*100], axis=1)
     print(f'Before Missing Values\n{before}')
     
     if drop:
-        #drop data is missing - cols where there are at least the 30% of not null values        
-        df.dropna(thresh=0.3*len(df), axis=1, inplace=True)
+        #drop data is missing - cols where there are at least the threshold% of not null values        
+        df.dropna(thresh=threshold*len(df), axis=1, inplace=True)
     
     elif fill:
         #Numeric columns
@@ -63,13 +65,16 @@ def missing_treatment(df, drop, fill):
             df.dropna(subset=categorial_columns, inplace=True)
             
     else:
-        #drop data is missing - cols where there are at least the 30% of not null values        
-        df.dropna(thresh=0.3*len(df), axis=1, inplace=True)
+        #drop data is missing - cols where there are at least the "threshold" (0.3 = 30%) of not null values 
+        df.dropna(thresh=threshold*len(df), axis=1, inplace=True)
         
         #Numeric columns
         numeric_columns = numeric(df)
 
         if numeric_columns:
+            #drop numeric data is missing - rows where there are null values
+            df.dropna(subset=numeric_columns, inplace=True)
+            
             # fill the NaN values of numeric columns with the average value
             df[numeric_columns] = df[numeric_columns].fillna(df.mean())
 
@@ -82,7 +87,7 @@ def missing_treatment(df, drop, fill):
 
     rows_after = df.shape[0]
     after = pd.concat([df.isna().sum(), df.isna().sum()/len(df)*100], axis=1)
-    print(f'After Missing Values\n{after}')
+    print(f'\nAfter Missing Values\n{after}')
     print('\nPercent missing value removed: {:.2%}\n'.format((rows_before-rows_after)/rows_before))
     
     return df
@@ -115,7 +120,7 @@ def data_formatting(df):
         df[categorial_columns] = df[categorial_columns].astype('string')
         
         # to lower
-        df[categorial_columns] = df[categorial_columns].apply(lambda x: x.str.lower(), axis=1)
+        df[categorial_columns] = df[categorial_columns].apply(lambda x: x.str.lower())
         
         # remove white space at beginning and end string
         df[categorial_columns] = df[categorial_columns].apply(lambda x: x.str.lstrip(), axis=1)
@@ -145,3 +150,26 @@ def data_formatting(df):
             print(f"Categorial Column ' {col} ' Unique Values:\n {df[col].unique()}\n")
               
     return df
+
+
+def get_percentile(df, percentile_rank):
+    
+    # First, sort by ascending incident_id,datestamp (case_id,timestamp), reset the indices
+    df = df.sort_values(by=['incident_id','datestamp']).reset_index()
+    
+    # Rule of three to get the index of the gdp
+    #Make sense? case_id = trace
+    index = (len(df.index)-1) * percentile_rank / 100.0
+    index = int(index)
+    
+    # Return the datestamp corresponding to the percentile rank
+    # as well as the name of the corresponding incident_id
+    return (df.at[index, 'incident_id'], df.at[index, 'datestamp'])
+
+
+def interquartile_range(df):
+    
+    c75, p75 = get_percentile(df, 75)  # 75th percentile country and gdp
+    c25, p25 = get_percentile(df, 25)  # 25th percentile country and gdp
+    iqr = p75 - p25  # Interquartile Range
+    return iqr
