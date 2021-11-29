@@ -286,3 +286,318 @@ assignment_group         0  0.0
 
 Percent missing value removed: 21.74%
 
+Attributes type
+incident_id                object
+km_number                  object
+interaction_id             object
+datestamp                  object
+incidentactivity_number    object
+incidentactivity_type      object
+assignment_group           object
+dtype: object
+
+Categorial Column ' incident_id ' Unique Values:
+ <StringArray>
+['im0000004', 'im0000005', 'im0000006', 'im0000011', 'im0000012', 'im0000013',
+ 'im0000014', 'im0000015', 'im0000017', 'im0000018',
+ ...
+ 'im0047048', 'im0047049', 'im0047050', 'im0047051', 'im0047052', 'im0047053',
+ 'im0047054', 'im0047055', 'im0047056', 'im0047057']
+Length: 46616, dtype: string
+
+Categorial Column ' km_number ' Unique Values:
+ <StringArray>
+['km0000553', 'km0000611', 'km0000339', 'km0000401', 'km0000670', 'km0000852',
+ 'km0000928', 'km0001430', 'km0000579', 'km0000931',
+ ...
+ 'km0002363', 'km0002277', 'km0001642', 'km0002062', 'km0001696', 'km0001621',
+ 'km0001794', 'km0001052', 'km0000378', 'km0001578']
+Length: 1825, dtype: string
+
+Categorial Column ' interaction_id ' Unique Values:
+ <StringArray>
+['sd0000007', 'sd0000011', 'sd0000017', 'sd0000025', 'sd0000029', 'sd0000031',
+ 'sd0000033', 'sd0000034', 'sd0000036', 'sd0000037',
+ ...
+ 'sd0146917', 'sd0146896', 'sd0147046', 'sd0147071', 'sd0147015', 'sd0147021',
+ 'sd0146967', 'sd0146982', 'sd0146986', 'sd0147088']
+Length: 46444, dtype: string
+
+Categorial Column ' datestamp ' Unique Values:
+ ['2013-07-01T08:17:00.000000000' '2013-09-25T08:27:00.000000000'
+ '2013-04-11T12:09:00.000000000' ... '2014-03-31T17:25:00.000000000'
+ '2014-03-31T20:38:00.000000000' '2014-03-31T22:47:00.000000000']
+
+Categorial Column ' incidentactivity_number ' Unique Values:
+ <StringArray>
+['001a3689763', '001a5544096', '001a5849978', '001a5849979', '001a5849980',
+ '001a5852941', '001a5852942', '001a5852943', '001a5852172', '001a5852173',
+ ...
+ '001a6916248', '001a6916249', '001a6916250', '001a6917788', '001a6917801',
+ '001a6917802', '001a6919138', '001a6919139', '001a6919208', '001a6922086']
+Length: 466737, dtype: string
+
+Categorial Column ' incidentactivity_type ' Unique Values:
+ <StringArray>
+[                'reassignment',              'operator update',
+                   'assignment',         'update from customer',
+                       'closed',                 'caused by ci',
+           'description update',                'status change',
+            'analysis/research',                       'update',
+                     'resolved',                       'reopen',
+                  'oo response',   'external vendor assignment',
+  'communication with customer',               'pending vendor',
+                         'open',    'communication with vendor',
+             'vendor reference',                'impact change',
+               'urgency change',      'quality indicator fixed',
+           'problem workaround',              'problem closure',
+           'affected ci change',               'service change',
+                     'referred',      'vendor reference change',
+        'incident reproduction',            'quality indicator',
+             'notify by change',               'contact change',
+        'quality indicator set',             'mail to customer',
+             'callback request',              'external update',
+ 'external vendor reassignment',                'alert stage 1',
+                      'dial-in']
+Length: 39, dtype: string
+
+Categorial Column ' assignment_group ' Unique Values:
+ <StringArray>
+['team0001', 'team0003', 'team0002', 'team9999', 'team0170', 'team0004',
+ 'team0005', 'team0171', 'team0006', 'team0007',
+ ...
+ 'team0232', 'team0233', 'team0234', 'team0235', 'team0236', 'team0237',
+ 'team0238', 'team0239', 'team0240', 'team0241']
+Length: 242, dtype: string
+
+Attributes type
+incident_id                        string
+km_number                          string
+interaction_id                     string
+datestamp                  datetime64[ns]
+incidentactivity_number            string
+incidentactivity_type              string
+assignment_group                   string
+dtype: object
+
+Statistics Categorial Columns: 
+       incident_id  km_number interaction_id            datestamp  \
+count       466737     466737         466737               466737   
+unique       46616       1825          46444                87175   
+top      im0000428  km0001106           #n/b  2013-12-23 14:43:00   
+freq           178      17638           5643                   34   
+first          NaN        NaN            NaN  2013-01-02 08:06:00   
+last           NaN        NaN            NaN  2014-12-03 22:58:00   
+
+       incidentactivity_number incidentactivity_type assignment_group  
+count                   466737                466737           466737  
+unique                  466737                    39              242  
+top                001a3689763            assignment         team0008  
+freq                         1                 88502            84143  
+first                      NaN                   NaN              NaN  
+last                       NaN                   NaN              NaN  
+
+
+Info after PROCESSED merge:
+
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 563831 entries, 0 to 563830
+Data columns (total 32 columns):
+ #   Column                      Non-Null Count   Dtype  
+---  ------                      --------------   -----  
+ 0   incident_id                 563831 non-null  object 
+ 1   ci_name_aff_                97094 non-null   object 
+ 2   ci_type_aff_                97094 non-null   object 
+ 3   ci_subtype_aff_             97094 non-null   object 
+ 4   service_component_wbs_aff_  97094 non-null   object 
+ 5   status                      97094 non-null   object 
+ 6   impact                      97094 non-null   float64
+ 7   urgency                     97094 non-null   float64
+ 8   priority                    97094 non-null   float64
+ 9   category                    97094 non-null   object 
+ 10  km_number                   563831 non-null  object 
+ 11  alert_status                44825 non-null   object 
+ 12  #_reassignments             44825 non-null   float64
+ 13  open_time                   44825 non-null   object 
+ 14  resolved_time               44825 non-null   object 
+ 15  close_time                  97094 non-null   object 
+ 16  handle_time_hours_          44825 non-null   float64
+ 17  closure_code                97094 non-null   object 
+ 18  #_related_interactions      44825 non-null   float64
+ 19  related_interaction         44825 non-null   object 
+ 20  ci_name_cby_                44825 non-null   object 
+ 21  ci_type_cby_                44825 non-null   object 
+ 22  ci_subtype_cby_             44825 non-null   object 
+ 23  servicecomp_wbs_cby_        44825 non-null   object 
+ 24  interaction_id              519006 non-null  object 
+ 25  open_time_first_touch_      52269 non-null   object 
+ 26  first_call_resolution       52269 non-null   object 
+ 27  handle_time_secs_           52269 non-null   float64
+ 28  datestamp                   466737 non-null  object 
+ 29  incidentactivity_number     466737 non-null  object 
+ 30  incidentactivity_type       466737 non-null  object 
+ 31  assignment_group            466737 non-null  object 
+dtypes: float64(7), object(25)
+memory usage: 137.7+ MB
+
+
+---------------------------------------PROCESSED Table: Merged Interacao + Incidente + Atividade Incidente + Mudancas ---------------------------------------
+
+Before Missing Values
+                                 0          1
+incident_id                      0   0.000000
+ci_name_aff_                466737  82.779592
+ci_type_aff_                466737  82.779592
+ci_subtype_aff_             466737  82.779592
+service_component_wbs_aff_  466737  82.779592
+status                      466737  82.779592
+impact                      466737  82.779592
+urgency                     466737  82.779592
+priority                    466737  82.779592
+category                    466737  82.779592
+km_number                        0   0.000000
+alert_status                519006  92.049923
+#_reassignments             519006  92.049923
+open_time                   519006  92.049923
+resolved_time               519006  92.049923
+close_time                  466737  82.779592
+handle_time_hours_          519006  92.049923
+closure_code                466737  82.779592
+#_related_interactions      519006  92.049923
+related_interaction         519006  92.049923
+ci_name_cby_                519006  92.049923
+ci_type_cby_                519006  92.049923
+ci_subtype_cby_             519006  92.049923
+servicecomp_wbs_cby_        519006  92.049923
+interaction_id               44825   7.950077
+open_time_first_touch_      511562  90.729669
+first_call_resolution       511562  90.729669
+handle_time_secs_           511562  90.729669
+datestamp                    97094  17.220408
+incidentactivity_number      97094  17.220408
+incidentactivity_type        97094  17.220408
+assignment_group             97094  17.220408
+
+After Missing Values
+                         0    1
+incident_id              0  0.0
+km_number                0  0.0
+interaction_id           0  0.0
+datestamp                0  0.0
+incidentactivity_number  0  0.0
+incidentactivity_type    0  0.0
+assignment_group         0  0.0
+
+Percent missing value removed: 17.22%
+
+Attributes type
+incident_id                object
+km_number                  object
+interaction_id             object
+datestamp                  object
+incidentactivity_number    object
+incidentactivity_type      object
+assignment_group           object
+dtype: object
+
+Categorial Column ' incident_id ' Unique Values:
+ <StringArray>
+['im0000004', 'im0000005', 'im0000006', 'im0000011', 'im0000012', 'im0000013',
+ 'im0000014', 'im0000015', 'im0000017', 'im0000018',
+ ...
+ 'im0047048', 'im0047049', 'im0047050', 'im0047051', 'im0047052', 'im0047053',
+ 'im0047054', 'im0047055', 'im0047056', 'im0047057']
+Length: 46616, dtype: string
+
+Categorial Column ' km_number ' Unique Values:
+ <StringArray>
+['km0000553', 'km0000611', 'km0000339', 'km0000401', 'km0000670', 'km0000852',
+ 'km0000928', 'km0001430', 'km0000579', 'km0000931',
+ ...
+ 'km0002363', 'km0002277', 'km0001642', 'km0002062', 'km0001696', 'km0001621',
+ 'km0001794', 'km0001052', 'km0000378', 'km0001578']
+Length: 1825, dtype: string
+
+Categorial Column ' interaction_id ' Unique Values:
+ <StringArray>
+['sd0000007', 'sd0000011', 'sd0000017', 'sd0000025', 'sd0000029', 'sd0000031',
+ 'sd0000033', 'sd0000034', 'sd0000036', 'sd0000037',
+ ...
+ 'sd0146917', 'sd0146896', 'sd0147046', 'sd0147071', 'sd0147015', 'sd0147021',
+ 'sd0146967', 'sd0146982', 'sd0146986', 'sd0147088']
+Length: 46444, dtype: string
+
+Categorial Column ' datestamp ' Unique Values:
+ ['2013-07-01T08:17:00.000000000' '2013-09-25T08:27:00.000000000'
+ '2013-04-11T12:09:00.000000000' ... '2014-03-31T17:25:00.000000000'
+ '2014-03-31T20:38:00.000000000' '2014-03-31T22:47:00.000000000']
+
+Categorial Column ' incidentactivity_number ' Unique Values:
+ <StringArray>
+['001a3689763', '001a5544096', '001a5849978', '001a5849979', '001a5849980',
+ '001a5852941', '001a5852942', '001a5852943', '001a5852172', '001a5852173',
+ ...
+ '001a6916248', '001a6916249', '001a6916250', '001a6917788', '001a6917801',
+ '001a6917802', '001a6919138', '001a6919139', '001a6919208', '001a6922086']
+Length: 466737, dtype: string
+
+Categorial Column ' incidentactivity_type ' Unique Values:
+ <StringArray>
+[                'reassignment',              'operator update',
+                   'assignment',         'update from customer',
+                       'closed',                 'caused by ci',
+           'description update',                'status change',
+            'analysis/research',                       'update',
+                     'resolved',                       'reopen',
+                  'oo response',   'external vendor assignment',
+  'communication with customer',               'pending vendor',
+                         'open',    'communication with vendor',
+             'vendor reference',                'impact change',
+               'urgency change',      'quality indicator fixed',
+           'problem workaround',              'problem closure',
+           'affected ci change',               'service change',
+                     'referred',      'vendor reference change',
+        'incident reproduction',            'quality indicator',
+             'notify by change',               'contact change',
+        'quality indicator set',             'mail to customer',
+             'callback request',              'external update',
+ 'external vendor reassignment',                'alert stage 1',
+                      'dial-in']
+Length: 39, dtype: string
+
+Categorial Column ' assignment_group ' Unique Values:
+ <StringArray>
+['team0001', 'team0003', 'team0002', 'team9999', 'team0170', 'team0004',
+ 'team0005', 'team0171', 'team0006', 'team0007',
+ ...
+ 'team0232', 'team0233', 'team0234', 'team0235', 'team0236', 'team0237',
+ 'team0238', 'team0239', 'team0240', 'team0241']
+Length: 242, dtype: string
+
+Attributes type
+incident_id                        string
+km_number                          string
+interaction_id                     string
+datestamp                  datetime64[ns]
+incidentactivity_number            string
+incidentactivity_type              string
+assignment_group                   string
+dtype: object
+
+Statistics Categorial Columns: 
+       incident_id  km_number interaction_id            datestamp  \
+count       466737     466737         466737               466737   
+unique       46616       1825          46444                87175   
+top      im0000428  km0001106           #n/b  2013-12-23 14:43:00   
+freq           178      17638           5643                   34   
+first          NaN        NaN            NaN  2013-01-02 08:06:00   
+last           NaN        NaN            NaN  2014-12-03 22:58:00   
+
+       incidentactivity_number incidentactivity_type assignment_group  
+count                   466737                466737           466737  
+unique                  466737                    39              242  
+top                001a3689763            assignment         team0008  
+freq                         1                 88502            84143  
+first                      NaN                   NaN              NaN  
+last                       NaN                   NaN              NaN  
+
