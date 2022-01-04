@@ -1,0 +1,563 @@
+---
+title: "Análises"
+author: "Grupo 4"
+date: "`r Sys.Date()`"
+output:  
+  rmdformats::readthedown:
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+    css: style.css
+---
+
+```{css, echo=FALSE}
+
+:root {
+  --master: #0176f4;
+  --prim: #004998;
+}
+
+```
+
+
+Esse documento tem o objetivo de elucidar análises interessantes que surgirem conforme o andamento do desenvolvimento do projeto de Predição de Atividades de um Log de Eventos de Incidente, inicialmente utilizando uma Rede Neural LSTM para tal;
+
+Depois de realizada todo o pré-processamento (exceto remoção de outliers) temos o dataset (log de eventos) contendo 466.737 observações e 7 variáveis:
+
+* incident_id - Seria o nosso case id
+* km_number - `foi mencionado em algum artigo mas esqueci`
+* interaction_id - Seria o id da interação com algum recurso
+* datestamp - Data (%Y/%m/%d %H:%M:%S) da ocorrência da atividade
+* incidentactivity_number - Id da atividade
+* incidentactivity_type - Seria a atividade que está ocorrendo naquele momento
+* assignment_group - O recurso ocupado naquela atividade
+
+Criamos algumas outras variáveis que serão utilizadas para outras análises:
+
+* date - Data (%Y/%m/%d) da ocorrência da atividade
+* first_activity - Primeira atividade do trace
+* last_activity - Última atividade do trace
+* first_day - Data da primeira atividade do trace
+* last_day - Data da última atividade do trace
+* case_resolution_days - Intervalo entre last_day e first_day (Tempo de resolução em dias)
+* activity_resolution_secs - Intervalo entre uma atividade e outra dentro do mesmo caso (Tempo de transição em segundos)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r extract, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
+library(reshape2)
+library(glue)
+library(reactable)
+library(dplyr)
+library(tidyr)
+library(plotly)
+library(openxlsx)
+library(gridExtra)
+library(kableExtra)
+library(lubridate)
+library(gganimate)
+library(stringr)
+library(DT)
+library(ks)
+library(cowplot)
+
+df <- read.csv("cleaning_dataset/pt3/PROCESSED_MERGED_Detail_pt3.csv", sep=";")
+
+
+```
+
+
+```{r transform, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
+df<- df %>% 
+  mutate(date = as.Date(datestamp, format="%Y-%m-%d")) %>%
+  group_by(incident_id) %>%
+  mutate(datestamp = strptime(datestamp, format="%Y-%m-%d %H:%M:%S")
+        ,first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df$activity_resolution_secs <- unlist(tapply(df$datestamp, INDEX = df$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
+# df1 <- df %>%
+#        group_by(incident_id) %>%
+#        mutate(first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+#               ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+#               ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+#               ,date = as.Date(date)
+#               ) 
+
+out_dates <- df %>%
+  dplyr::filter(date <= as.Date("2013-10-01") | date >= as.Date("2014-03-31")) %>%
+  select(incident_id) %>%
+  distinct()
+
+out_dates <- as.vector(out_dates$incident_id)
+
+out_resolution <- df %>%
+  dplyr::filter(case_resolution_days < 1 | case_resolution_days > 10 ) %>%
+  select(incident_id) %>%
+  distinct()
+
+out_resolution <- as.vector(out_resolution$incident_id)
+
+out_mean_activitys <- df %>%
+  group_by(incident_id) %>% 
+  count() %>% 
+  dplyr::filter(n > 15) %>%
+  select(incident_id) %>%
+  distinct()
+
+out_mean_activitys <- as.vector(out_mean_activitys$incident_id)
+
+# out_activity <- df %>%
+#   dplyr::filter(!first_activity %in% c('open','reopen') | !last_activity %in% c('closed','resolved')) %>%
+#   select(incident_id) %>%
+#   distinct()
+# 
+# out_activity <- as.vector(out_activity$incident_id)
+
+#cut1 dates
+df_final1 <- df %>%
+            dplyr::filter(!incident_id %in% out_dates)
+
+write.csv(df_final1, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut1_pt4.csv", sep=";")
+
+#cut2 resolution days
+df_final2 <- df_final1 %>%
+            dplyr::filter(!incident_id %in% out_resolution)
+
+write.csv(df_final2, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut2_pt4.csv", sep=";")
+
+#cut3 q3 qty activitys in case id
+df_final3 <- df_final2 %>%
+            dplyr::filter(!incident_id %in% out_mean_activitys)
+
+write.csv(df_final2, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut3_pt4.csv", sep=";")
+
+vu_repeated_activity <- df %>% group_by(incident_id) %>% count(incidentactivity_type)
+  
+```
+
+# CUT 1: Data das Atividades {.tabset .tabset-fade}
+
+Para entender como está distribuído as atividades no tempo foi feito dois gráficos para determinar um possível corte.
+
+Logo no primeiro momento foi possível visualizar que tem períodos onde a massa de atividades é menor em comparação com outros, por exemplo, antes de Setembro/2013 e depois de Abril/2014. Essa análise foi facilmente confirmada no segundo momento com um gráfico de densidade;
+
+* <b>CUT 1</b> - Realizamos um primeiro corte onde é removido <b>todos os Cases</b> (incident_id) que possuem atividades de algum desses períodos, mantendo então os cases que possuem atividades de Outubro/2012 a Março/2014. Encontramos um artigo onde foi mencionado a presença de outliers de `x a x data que eu não me recordo, infelizmente`
+
+O dataset resultante contém 227.455 observações e 13 variáveis (já mencionadas anteriormente). A comparação de ambos períodos é possível ver abaixo.
+
+> É notável que ocorre um padrão no inicio/final de cada mês, vendo somente a ocorrência das datas das atividades;
+
+## Histograma
+
+```{r hitogram dates plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+ 
+fig1 <- plot_ly(df, x = ~date) %>% add_histogram() %>%         
+  add_annotations(
+          text = "Datas das Atividades", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+  
+fig2 <- plot_ly(df_final1, x = ~date) %>% add_histogram() %>%         
+  add_annotations(
+          text = "Cut1", 
+          x = 0.3, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+subplot(fig1,fig2, shareY = T)
+```
+## Densidade
+
+```{r density dates plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+# xvar_f<-as.factor(df$date)
+# xvar_i<-as.integer(xvar_f)
+# 
+# par(mar=c(5.6,4.1,4.1,2.1))
+# 
+# plt <- plot(kde(xvar_i),xaxt="n",xlab="",ylab="",
+#      main="Density of Dates Before",las=1)
+# tx=seq(min(xvar_i),max(xvar_i),by=5)
+# lb=levels(xvar_f)[tx]
+# axis(side=1,at=tx,labels=lb,las=2)
+
+fig1 <- ggplot(df, aes(x = date )) + geom_density() + geom_rug()
+fig2 <- ggplot(df_final1, aes(x = date )) + geom_density() + geom_rug()
+
+cowplot::plot_grid(fig1, fig2, labels =c("      Datas Atividades","           Cut1"))
+
+```
+
+# CUT 2: Tempo de Resolução do Case {.tabset .tabset-fade}
+
+Utilizamos as variáveis first_day e last_day para calcular o tempo de resolução em dias... É possível que haja a necessidade de refazer esse cálculo caso ocorra mais algum "corte" específico do trace no log de eventos. Como por exemplo, se passarmos a considerar um determinado tipo de atividade como a última atividade do trace;
+
+Os cases onde demoram ceca de 0 dias para serem resolvidos estão bastante presentes nos dados. Por ser um processo de atendimento ITIL não conseguimos obter muitas informações desses cases visto que podem ter sido chamados para tirar dúvidas ou até mesmo cases que foram "abertos" somente para manter alguma rastreabilidades/mapeamento. 
+
+A mesma ideia é de cases onde o tempo de resolução excede os 10 dias, olhando a questão de "dias úteis", cases que extrapolam esse tempo não são cases que queremos "atingir". Por exemplo, olhando na visão de cliente não gostaríamos que um problema demorasse mais que isso para ser resolvido.
+
+* <b>CUT 2</b> - Realizamos um segundo corte onde é removido <b>todos os Cases</b> (incident_id) que possuem tempo de resolução menor que 1 dia e maior que 10 dias. 
+
+O dataset resultante contém 85.081 observações e 13 variáveis (já mencionadas anteriormente). A comparação de todos os cortes realizados, olhando a visão tempo de resolução, pode ser analisada abaixo.
+
+> Curiosamente também podemos observar que pode ser que haja um padrão no tempo de resolução do case;
+
+## Histograma
+
+```{r hitogram resolution days plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+# ggplotly( 
+# ggplot(df_final,aes(x = case_resolution_days, color = 'count')) +  
+#   geom_histogram(aes(y = ..count..), stat = "count",  fill = '#67B7D1', alpha = 0.5) +  
+#   geom_density(color = '#67B7D1') +  
+#   geom_rug(color = '#67B7D1') + 
+#   ggtitle("Histogram of Rsolution Days")+
+#   ylab("") + 
+#   xlab("")  + theme(legend.title=element_blank()) +
+#   scale_color_manual(values = c('count' = '#67B7D1'))
+# )
+
+fig1 <- plot_ly(df %>% distinct(incident_id, case_resolution_days), x = ~case_resolution_days) %>% add_histogram() %>%         
+  add_annotations(
+          text = "Tempo de Resolução\nem dias", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+  
+fig2 <- plot_ly(df_final1 %>% distinct(incident_id, case_resolution_days), x = ~case_resolution_days) %>% add_histogram() %>%         
+  add_annotations(
+          text = "Cut1", 
+          x = 0.3, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+fig3 <- plot_ly(df_final2 %>% distinct(incident_id, case_resolution_days), x = ~case_resolution_days) %>% add_histogram() %>%         
+  add_annotations(
+          text = "Cut2", 
+          x = 0.3, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+subplot(fig1,fig2,fig3, shareY = T)
+
+
+```
+
+## Densidade
+
+```{r density resolution days plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- ggplot(df %>% distinct(incident_id, case_resolution_days), aes(x = case_resolution_days )) + geom_density() + geom_rug()
+fig2 <- ggplot(df_final1 %>% distinct(incident_id, case_resolution_days), aes(x = case_resolution_days )) + geom_density() + geom_rug()
+fig3 <- ggplot(df_final2 %>% distinct(incident_id, case_resolution_days), aes(x = case_resolution_days )) + geom_density() + geom_rug()
+
+cowplot::plot_grid(fig1, fig2, fig3, labels =c("      Dias de Resolução","          Cut1","          Cut2"))
+
+
+```
+
+
+# CUT 3: Atividades em um Case id
+
+* <b>CUT 3</b> - Utilizando o boxsplot é possível fazer um corte inicial no 3º quartil (Q3 75% dos dados presentes) indicando que teremos por volta de 15 eventos por case.
+
+
+```{r n activity vs n cases plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- df_final2 %>% group_by(incident_id) %>% count() %>% 
+    plot_ly(
+          x = ~n, #y = ~incident_id, 
+          #color = ~n_cases, legendgroup=~n_cases,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) 
+
+fig2 <- df_final3 %>% group_by(incident_id) %>% count() %>% 
+    plot_ly(
+          x = ~n, #y = ~incident_id, 
+          #color = ~n_cases, legendgroup=~n_cases,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+    #    plotly::layout(boxmode = "group") %>% #, legend = .y
+        add_annotations(
+          text = "CUT 3:      Quantidade de atividades dentro de um case id", 
+          x = -0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+subplot(fig1,fig2, shareY = T)
+
+```
+
+
+
+# CUT 3.1: Atividade inicial e final de um Case Id {.tabset .tabset-fade}
+
+> em andamento - pode chegar a substituir ou não cut 3
+
+Para estudar o comportamento ideal do processo começamos a olhar quais atividades consideramos iniciais e finais. A ideia inicial seria excluir todos os cases que não atenderem determinados parâmetro.
+
+Aparentemente, não precisamos excluir todos os cases que não começam com 'open' e não terminam com 'closed' pois todas as atividades que começam ou terminam diferente disso são "qualitativas", podendo atrapalhar no fluxo do processo. Algumas opções:
+
+* Excluirmos os eventos que aparecerem depois de closed, se houver closed e eventos antes de open, se houver open. 
+* Ver em média a duração de cada atividade em horas, atividades consideradas curtas poderiam ser ignoradas no case visto que demandariam baixo "custo" pro atendimento.
+
+```{r activity vs cases plot, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+fig1 <- df_final2 %>% group_by(incident_id) %>% count(incidentactivity_type) %>% #dplyr::filter(n > 1) %>%
+    plot_ly(
+          x = ~n, y = ~incidentactivity_type, 
+          color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+    #    plotly::layout(boxmode = "group") %>% #, legend = .y
+        add_annotations(
+          text = "Repetição das atividades que ocorrem\n mais de uma vez dentro de um case id", 
+          x = -0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+fig1
+
+```
+
+```{r first activity in activitys, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+inds = which(df_final2$first_activity != 'open')
+# We use lapply() to get all rows for all indices, result is a list
+rows <-lapply(inds, function(x) (x))
+# With unlist() you get all relevant rows
+x <- df_final2[unlist(rows),]
+
+n_cases <- n_distinct(x$incident_id)
+```
+
+
+## Atividades iniciais de Cases que não iniciam com a atividade 'open'
+
+Houveram poucos cases que se enquadraram nesse cenário, sendo possível uma exclusão deles do log de eventos.
+
+```{r activity vs first activity plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- x %>% group_by(incident_id) %>% dplyr::filter(incidentactivity_type == first_activity) %>% count(incidentactivity_type) %>%
+    plot_ly(
+          x = ~n, y = ~incidentactivity_type, 
+          color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+    #    plotly::layout(boxmode = "group") %>% #, legend = .y
+        add_annotations(
+          text = "Repetição das atividades iniciais\n dentro de um case id que não inicia com 'open'", 
+          x = -0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+fig1
+
+```
+
+## Atividades finais de Cases que não terminam com a atividade 'closed'
+
+```{r last activity in activitys, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+inds = which(df_final2$last_activity != 'closed')
+# We use lapply() to get all rows for all indices, result is a list
+rows <-lapply(inds, function(x) (x))
+# With unlist() you get all relevant rows
+x <- df_final2[unlist(rows),]
+
+n_cases <- n_distinct(x$incident_id)
+```
+
+```{r activity vs last activity plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- x %>% group_by(incident_id) %>% dplyr::filter(incidentactivity_type == last_activity) %>% count(incidentactivity_type) %>%
+    plot_ly(
+          x = ~n, y = ~incidentactivity_type, 
+          color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+    #    plotly::layout(boxmode = "group") %>% #, legend = .y
+        add_annotations(
+          text = "Repetição das atividades finais\n dentro de um case id que não termina com 'closed'", 
+          x = -0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+fig1
+
+```
+
+# Outras Análises
+
+## Atividade "reassignment" x Recurso
+
+```{r activity vs resource plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+fig2 <- df_final2 %>% group_by(incident_id,assignment_group) %>% dplyr::filter(incidentactivity_type == 'reassignment') %>% count(incidentactivity_type) %>%
+    plot_ly(
+          x = ~n, y = ~assignment_group, 
+          color = ~assignment_group, legendgroup=~assignment_group,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+     #   plotly::layout(boxmode = "group") %>% #, legend = .y
+        add_annotations(
+          text = "Repetição das atividades reassigment por recurso", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        )
+
+fig2
+
+```
+
+
+## Dias de Resolução x Recurso (w/median) {.tabset .tabset-fade}
+
+
+```{r resolution days vs resource, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+res <- boxplot(df_final2$case_resolution_days ~ df_final2$assignment_group)
+
+median <- res[["stats"]][3,]
+resource <- res[["names"]]
+
+resource_resolution_median <- data.frame(assignment_group = resource, resource_median_resolution = median) %>% 
+  mutate( Faixa = cut(resource_median_resolution, 
+                     breaks = c(0,2,4,6,Inf),
+                     labels = c('Menos que 2 dias', 'Entre 2 e 3.99 dias', 'Entre 4 e 5.99 dias',
+                                'Acima de 6 dias'),
+                     include.lowest = T))
+
+df_box_resolution <- df_final2 %>% full_join(resource_resolution_median)
+
+```
+
+### Media < 2 dias
+
+```{r resolution days vs resource plot than less 2 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+df_box_resolution %>% dplyr::filter(Faixa == 'Menos que 2 dias') %>%
+    plot_ly(
+          x = ~case_resolution_days, y = ~assignment_group, 
+          color = ~assignment_group, legendgroup=~assignment_group,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+     #   plotly::layout(boxmode = "assignment_group") %>% #, legend = .y
+        add_annotations(
+          text = "menos que 2 dias", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        )
+
+```
+
+### Media 2 a 4 dias
+
+```{r resolution days vs resource plot 2 to 4 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+df_box_resolution %>% dplyr::filter(Faixa == 'Entre 2 e 3.99 dias') %>%
+    plot_ly(
+          x = ~case_resolution_days, y = ~assignment_group, 
+          color = ~assignment_group, legendgroup=~assignment_group,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+     #   plotly::layout(boxmode = "assignment_group") %>% #, legend = .y
+        add_annotations(
+          text = "entre 2 a 3.99 dias", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        )
+
+```
+
+### Media 4 a 6 dias
+
+```{r resolution days vs resource plot 4 to 6 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+df_box_resolution %>% dplyr::filter(Faixa == 'Entre 4 e 5.99 dias') %>%
+    plot_ly(
+          x = ~case_resolution_days, y = ~assignment_group, 
+          color = ~assignment_group, legendgroup=~assignment_group,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+     #   plotly::layout(boxmode = "assignment_group") %>% #, legend = .y
+        add_annotations(
+          text = "entre 4 a 5.99 dias", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        )
+
+```
+
+### Acima 6 dias
+
+```{r resolution days vs resource plot than more 6 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+df_box_resolution %>% dplyr::filter(Faixa == 'Acima de 6 dias') %>%
+    plot_ly(
+          x = ~case_resolution_days, y = ~assignment_group, 
+          color = ~assignment_group, legendgroup=~assignment_group,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+     #   plotly::layout(boxmode = "assignment_group") %>% #, legend = .y
+        add_annotations(
+          text = "acima de 6 dias", 
+          x = 0.2, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        )
+
+```
