@@ -1,4 +1,4 @@
-Unnamed: 0,incident_id,km_number,interaction_id,datestamp,incidentactivity_number,incidentactivity_type,assignment_group,date,first_activity,last_activity,first_day,last_day,case_resolution_days,activity_resolution_secs,r
+Unnamed: 0,number,km_number,interaction_id,updated_at,incidentactivity_number,incident_state,assignment_group,date,first_activity,last_activity,first_day,last_day,case_resolution_days,activity_resolution_secs,r
 19,im0004169,km0000611,sd0009898,2013-10-10 08:53:00,001a5657495,open,team0002,2013-10-10,open,closed,2013-10-10 08:53:00,2013-10-14 09:26:00,4.02291666666667,0,1
 20,im0004169,km0000611,sd0009898,2013-10-10 10:35:00,001a5656453,assignment,team0063,2013-10-10,open,closed,2013-10-10 08:53:00,2013-10-14 09:26:00,4.02291666666667,6120,2
 21,im0004169,km0000611,sd0009898,2013-10-14 09:26:00,001a5682119,closed,team0063,2013-10-14,open,closed,2013-10-10 08:53:00,2013-10-14 09:26:00,4.02291666666667,341460,5
