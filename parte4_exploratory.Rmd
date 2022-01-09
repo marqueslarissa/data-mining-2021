@@ -20,28 +20,6 @@ output:
 ```
 
 
-Esse documento tem o objetivo de elucidar análises interessantes que surgirem conforme o andamento do desenvolvimento do projeto de Predição de Atividades de um Log de Eventos de Incidente, inicialmente utilizando uma Rede Neural LSTM para tal;
-
-Depois de realizada todo o pré-processamento (exceto remoção de outliers) temos o dataset (log de eventos) contendo 466.737 observações e 7 variáveis:
-
-* incident_id - Seria o nosso case id
-* km_number - `foi mencionado em algum artigo mas esqueci`
-* interaction_id - Seria o id da interação com algum recurso
-* datestamp - Data (%Y/%m/%d %H:%M:%S) da ocorrência da atividade
-* incidentactivity_number - Id da atividade
-* incidentactivity_type - Seria a atividade que está ocorrendo naquele momento
-* assignment_group - O recurso ocupado naquela atividade
-
-Criamos algumas outras variáveis que serão utilizadas para outras análises:
-
-* date - Data (%Y/%m/%d) da ocorrência da atividade
-* first_activity - Primeira atividade do trace
-* last_activity - Última atividade do trace
-* first_day - Data da primeira atividade do trace
-* last_day - Data da última atividade do trace
-* case_resolution_days - Intervalo entre last_day e first_day (Tempo de resolução em dias)
-* activity_resolution_secs - Intervalo entre uma atividade e outra dentro do mesmo caso (Tempo de transição em segundos)
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -66,12 +44,25 @@ library(cowplot)
 
 df <- read.csv("cleaning_dataset/pt3/PROCESSED_MERGED_Detail_pt3.csv", sep=";")
 
+ncases_dfraw <- n_distinct(df$incident_id)
+nevents_dfraw <- nrow(df)
+
 
 ```
 
+Esse documento tem o objetivo de elucidar análises interessantes que surgirem conforme o andamento do desenvolvimento do projeto de Predição de Atividades de um Log de Eventos de Incidente, inicialmente utilizando um preditor ATS (Annotated Transition System/Sistema de Transição Anotado) para tal;
+
+Depois de realizada todo o pré-processamento (exceto remoção de outliers) temos o dataset (log de eventos) contendo `r nevents_dfraw` eventos, `r ncases_dfraw` cases e 7 variáveis:
+
+* incident_id - Seria o nosso case id
+* km_number - `foi mencionado em algum artigo mas esqueci`
+* interaction_id - Seria o id da interação com algum recurso
+* datestamp - Data (%Y/%m/%d %H:%M:%S) da ocorrência da atividade
+* incidentactivity_number - Id da atividade
+* incidentactivity_type - Seria a atividade que está ocorrendo naquele momento
+* assignment_group - O recurso ocupado naquela atividade
 
 ```{r transform, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
-
 df<- df %>% 
   mutate(date = as.Date(datestamp, format="%Y-%m-%d")) %>%
   group_by(incident_id) %>%
@@ -86,6 +77,21 @@ df<- df %>%
 
 df$activity_resolution_secs <- unlist(tapply(df$datestamp, INDEX = df$incident_id,
                           FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+```
+
+
+Criamos algumas outras variáveis que serão utilizadas para outras análises:
+
+* date - Data (%Y/%m/%d) da ocorrência da atividade
+* first_activity - Primeira atividade do trace
+* last_activity - Última atividade do trace
+* first_day - Data da primeira atividade do trace
+* last_day - Data da última atividade do trace
+* case_resolution_days - Intervalo entre last_day e first_day (Tempo de resolução em dias)
+* activity_resolution_secs - Intervalo entre uma atividade e outra dentro do mesmo caso (Tempo de transição em segundos)
+
+```{r cut1, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
 
 # df1 <- df %>%
 #        group_by(incident_id) %>%
@@ -95,6 +101,9 @@ df$activity_resolution_secs <- unlist(tapply(df$datestamp, INDEX = df$incident_i
 #               ,date = as.Date(date)
 #               ) 
 
+
+
+#cut1 dates
 out_dates <- df %>%
   dplyr::filter(date <= as.Date("2013-10-01") | date >= as.Date("2014-03-31")) %>%
   select(incident_id) %>%
@@ -102,49 +111,28 @@ out_dates <- df %>%
 
 out_dates <- as.vector(out_dates$incident_id)
 
-out_resolution <- df %>%
-  dplyr::filter(case_resolution_days < 1 | case_resolution_days > 10 ) %>%
-  select(incident_id) %>%
-  distinct()
-
-out_resolution <- as.vector(out_resolution$incident_id)
-
-out_mean_activitys <- df %>%
-  group_by(incident_id) %>% 
-  count() %>% 
-  dplyr::filter(n > 15) %>%
-  select(incident_id) %>%
-  distinct()
-
-out_mean_activitys <- as.vector(out_mean_activitys$incident_id)
-
-# out_activity <- df %>%
-#   dplyr::filter(!first_activity %in% c('open','reopen') | !last_activity %in% c('closed','resolved')) %>%
-#   select(incident_id) %>%
-#   distinct()
-# 
-# out_activity <- as.vector(out_activity$incident_id)
-
-#cut1 dates
 df_final1 <- df %>%
             dplyr::filter(!incident_id %in% out_dates)
 
+df_final1<- df_final1 %>% 
+  group_by(incident_id) %>%
+  mutate(first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df_final1$activity_resolution_secs <- unlist(tapply(df_final1$datestamp, INDEX = df_final1$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
 write.csv(df_final1, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut1_pt4.csv", sep=";")
 
-#cut2 resolution days
-df_final2 <- df_final1 %>%
-            dplyr::filter(!incident_id %in% out_resolution)
+ncases_outdates <- n_distinct(df_final1$incident_id)
+nevents_outdates <- nrow(df_final1)
 
-write.csv(df_final2, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut2_pt4.csv", sep=";")
 
-#cut3 q3 qty activitys in case id
-df_final3 <- df_final2 %>%
-            dplyr::filter(!incident_id %in% out_mean_activitys)
-
-write.csv(df_final2, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut3_pt4.csv", sep=";")
-
-vu_repeated_activity <- df %>% group_by(incident_id) %>% count(incidentactivity_type)
-  
 ```
 
 # CUT 1: Data das Atividades {.tabset .tabset-fade}
@@ -155,7 +143,7 @@ Logo no primeiro momento foi possível visualizar que tem períodos onde a massa
 
 * <b>CUT 1</b> - Realizamos um primeiro corte onde é removido <b>todos os Cases</b> (incident_id) que possuem atividades de algum desses períodos, mantendo então os cases que possuem atividades de Outubro/2012 a Março/2014. Encontramos um artigo onde foi mencionado a presença de outliers de `x a x data que eu não me recordo, infelizmente`
 
-O dataset resultante contém 227.455 observações e 13 variáveis (já mencionadas anteriormente). A comparação de ambos períodos é possível ver abaixo.
+O dataset resultante contém `r nevents_outdates` eventos, `r ncases_outdates` cases e 14 variáveis (já mencionadas anteriormente). A comparação de ambos períodos é possível ver abaixo.
 
 > É notável que ocorre um padrão no inicio/final de cada mês, vendo somente a ocorrência das datas das atividades;
 
@@ -184,6 +172,7 @@ fig2 <- plot_ly(df_final1, x = ~date) %>% add_histogram() %>%
 
 
 subplot(fig1,fig2, shareY = T)
+
 ```
 ## Densidade
 
@@ -207,6 +196,40 @@ cowplot::plot_grid(fig1, fig2, labels =c("      Datas Atividades","           Cu
 
 ```
 
+```{r cut2, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
+#cut2 resolution days
+out_resolution <- df_final1 %>%
+  dplyr::filter(case_resolution_days < 1 | case_resolution_days > 10 ) %>%
+  select(incident_id) %>%
+  distinct()
+
+out_resolution <- as.vector(out_resolution$incident_id)
+
+df_final2 <- df_final1 %>%
+            dplyr::filter(!incident_id %in% out_resolution)
+
+df_final2<- df_final2 %>% 
+  group_by(incident_id) %>%
+  mutate(first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df_final2$activity_resolution_secs <- unlist(tapply(df_final2$datestamp, INDEX = df_final2$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
+write.csv(df_final2, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut2_pt4.csv", sep=";")
+
+ncases_outresolution <- n_distinct(df_final2$incident_id)
+nevents_outresolution <- nrow(df_final2)
+
+```
+
+
 # CUT 2: Tempo de Resolução do Case {.tabset .tabset-fade}
 
 Utilizamos as variáveis first_day e last_day para calcular o tempo de resolução em dias... É possível que haja a necessidade de refazer esse cálculo caso ocorra mais algum "corte" específico do trace no log de eventos. Como por exemplo, se passarmos a considerar um determinado tipo de atividade como a última atividade do trace;
@@ -217,7 +240,7 @@ A mesma ideia é de cases onde o tempo de resolução excede os 10 dias, olhando
 
 * <b>CUT 2</b> - Realizamos um segundo corte onde é removido <b>todos os Cases</b> (incident_id) que possuem tempo de resolução menor que 1 dia e maior que 10 dias. 
 
-O dataset resultante contém 85.081 observações e 13 variáveis (já mencionadas anteriormente). A comparação de todos os cortes realizados, olhando a visão tempo de resolução, pode ser analisada abaixo.
+O dataset resultante contém `r nevents_outresolution` eventos, `r ncases_outresolution` cases e 14 variáveis (já mencionadas anteriormente). A comparação de todos os cortes realizados, olhando a visão tempo de resolução, pode ser analisada abaixo.
 
 > Curiosamente também podemos observar que pode ser que haja um padrão no tempo de resolução do case;
 
@@ -282,10 +305,49 @@ cowplot::plot_grid(fig1, fig2, fig3, labels =c("      Dias de Resolução","    
 
 ```
 
+```{r cut3, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
+#cut3 q3 qty activitys in case id
+out_mean_activitys <- df_final2 %>%
+  group_by(incident_id) %>% 
+  count() %>% 
+  dplyr::filter(n > 15) %>%
+  select(incident_id) %>%
+  distinct()
+
+out_mean_activitys <- as.vector(out_mean_activitys$incident_id)
+
+df_final3 <- df_final2 %>%
+            dplyr::filter(!incident_id %in% out_mean_activitys)
+
+df_final3<- df_final3 %>% 
+  group_by(incident_id) %>%
+  mutate(first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df_final3$activity_resolution_secs <- unlist(tapply(df_final3$datestamp, INDEX = df_final3$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
+write.csv(df_final3, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut3_pt4.csv", sep=";")
+
+ncases_outmeanactivitys <- n_distinct(df_final3$incident_id)
+nevents_outmeanactivitys <- nrow(df_final3)
+
+
+
+```
+
 
 # CUT 3: Atividades em um Case id
 
 * <b>CUT 3</b> - Utilizando o boxsplot é possível fazer um corte inicial no 3º quartil (Q3 75% dos dados presentes) indicando que teremos por volta de 15 eventos por case.
+
+O dataset resultante contém `r nevents_outmeanactivitys` eventos, `r ncases_outmeanactivitys` cases e 14 variáveis (já mencionadas anteriormente). A comparação com o último o corte realizado, olhando a visão da quantidade eventos, pode ser analisada abaixo.
 
 
 ```{r n activity vs n cases plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -320,30 +382,137 @@ subplot(fig1,fig2, shareY = T)
 ```
 
 
+```{r cut4, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
 
-# CUT 3.1: Atividade inicial e final de um Case Id {.tabset .tabset-fade}
+#cut 4 repeated activitys in case id
+df_final4 <- df_final3 %>%
+             group_by(incident_id) %>%
+             distinct(incidentactivity_type, .keep_all = TRUE)
 
-> em andamento - pode chegar a substituir ou não cut 3
+df_final4<- df_final4 %>% 
+  group_by(incident_id) %>%
+  mutate(first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df_final4$activity_resolution_secs <- unlist(tapply(df_final4$datestamp, INDEX = df_final4$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
+write.csv(df_final4, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut4_pt4.csv", sep=";")
+
+ncases_repeatedactivitys <- n_distinct(df_final4$incident_id)
+nevents_repeatedactivitys <- nrow(df_final4)
+
+
+```
+
+
+# CUT 4: Repetição de atividades dentro de um case ID
+
+* <b>CUT 4</b> - Utilizando o conceito de sistemas ITIL, foi possível correlacionar o sistema utilizado nesse log de eventos com outro sistema também ITIL, visto por membro do time.
+  * Muitas das variaveis que se repetem em um case id podem provocar loops e, dentro do log de eventos, tais atividades que se destacam são mais "qualitativas", ou seja, relacionadas a integridade do log e também na questão da satisfação do cliente, outras são bastante especificas relacionadas à alguma alteração de recursos ou até geradas por ação do cliente. 
+  * Foi retirado então todas as atividades repetidas de cada case id.
+  
+O dataset resultante contém `r nevents_repeatedactivitys` eventos, `r ncases_repeatedactivitys` cases e 14 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão da repetição de atividades em um case, pode ser analisada abaixo.
+
+> Com esse corte conseguimos melhorar o desempenho de algoritimos que não lidam bem com repetição de eventos.
+
+```{r activity vs cases plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- df_final3 %>% group_by(incident_id) %>% count(incidentactivity_type) %>% dplyr::filter(n > 1) %>%
+    plot_ly(
+          x = ~n, y = ~incidentactivity_type, 
+          color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
+          showlegend = TRUE,
+          type = "box", orientation = 'h'
+        ) %>% 
+    #    plotly::layout(boxmode = "group") %>% #, legend = .y
+        add_annotations(
+          text = "CUT 4: Repetição das atividades que ocorrem mais de uma vez dentro de um case id", 
+          x = -0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "bottom",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+fig1
+
+```
+
+
+```{r cut5, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
+#cut 5 resolution time activity with < 300 sec mean
+res <- boxplot(df_final4$activity_resolution_secs ~ df_final4$incidentactivity_type)
+
+median <- res[["stats"]][3,]
+activitys <- res[["names"]]
+
+x <- data.frame(activity = activitys, median = median)
+
+cutmean <- x %>% dplyr::filter(median < 300 & activity != 'open') 
+
+cutmean <- as.vector(cutmean$activity)
+
+df_final5 <- df_final4 %>% 
+  group_by(incident_id) %>% 
+  mutate(r = row_number()) %>%
+  dplyr::filter(!(incidentactivity_type %in% cutmean)) 
+
+df_final5<- df_final5 %>% 
+  group_by(incident_id) %>%
+  mutate(first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df_final5$activity_resolution_secs <- unlist(tapply(df_final5$datestamp, INDEX = df_final5$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
+write.csv(df_final5, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut5_pt4.csv", sep=";")
+
+ncases_resolutionactivity <- n_distinct(df_final5$incident_id)
+nevents_resolutionactivity <- nrow(df_final5)
+
+
+```
+
+
+# CUT 5: Atividades que não possuem uma média razoável de duração {.tabset .tabset-fade}
 
 Para estudar o comportamento ideal do processo começamos a olhar quais atividades consideramos iniciais e finais. A ideia inicial seria excluir todos os cases que não atenderem determinados parâmetro.
 
-Aparentemente, não precisamos excluir todos os cases que não começam com 'open' e não terminam com 'closed' pois todas as atividades que começam ou terminam diferente disso são "qualitativas", podendo atrapalhar no fluxo do processo. Algumas opções:
+Aparentemente, não precisamos excluir todos os cases que não começam com 'open' e não terminam com 'closed' (por enquanto) pois todas as atividades que começam ou terminam diferente disso são "qualitativas", podendo atrapalhar no fluxo do processo. Algumas opções:
 
 * Excluirmos os eventos que aparecerem depois de closed, se houver closed e eventos antes de open, se houver open. 
 * Ver em média a duração de cada atividade em horas, atividades consideradas curtas poderiam ser ignoradas no case visto que demandariam baixo "custo" pro atendimento.
+  * <b>CUT 5</b> - A segunda opção, inicialmente, parece ser mais razoável além de que assim o log de eventos poderá ter menos ruídos, visto que atividades que durarem em média 0 segundos não parece ser atividades que dependem necessariamente de um recurso. Podem, inclusive, serem atividades automatizadas pelo sistema.
 
-```{r activity vs cases plot, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+Olhando as atividades que possuem media menor que 300 segundos (5 minutos) a mesma questao levantada no corte anterior aparece, exceto pela atividade 'open' que pode estar ocorrendo durante um case, esta atividade manteremos.
 
-fig1 <- df_final2 %>% group_by(incident_id) %>% count(incidentactivity_type) %>% #dplyr::filter(n > 1) %>%
+O dataset resultante contém `r nevents_resolutionactivity` eventos, `r ncases_resolutionactivity` cases e 14 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão tempo de resolução da atividade, pode ser analisada abaixo.
+
+> Poderemos olhar o 3º Quartil caso seja necessário, em outro momento.
+
+```{r mean resolution activity zero plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- df_final4 %>% group_by(incident_id) %>% dplyr::filter(incidentactivity_type %in% cutmean) %>%
     plot_ly(
-          x = ~n, y = ~incidentactivity_type, 
+          x = ~activity_resolution_secs, y = ~incidentactivity_type, 
           color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
           showlegend = TRUE,
           type = "box", orientation = 'h'
         ) %>% 
     #    plotly::layout(boxmode = "group") %>% #, legend = .y
         add_annotations(
-          text = "Repetição das atividades que ocorrem\n mais de uma vez dentro de um case id", 
+          text = "CUT 5: Duração das atividades dentro de um case id", 
           x = -0.1, y = 1,
           yref = "paper", xref = "paper",
           xanchor = "middle", yanchor = "bottom",
@@ -352,87 +521,79 @@ fig1 <- df_final2 %>% group_by(incident_id) %>% count(incidentactivity_type) %>%
 
 fig1
 
-```
 
-```{r first activity in activitys, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-inds = which(df_final2$first_activity != 'open')
-# We use lapply() to get all rows for all indices, result is a list
-rows <-lapply(inds, function(x) (x))
-# With unlist() you get all relevant rows
-x <- df_final2[unlist(rows),]
-
-n_cases <- n_distinct(x$incident_id)
 ```
 
 
-## Atividades iniciais de Cases que não iniciam com a atividade 'open'
+```{r cut6, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
 
-Houveram poucos cases que se enquadraram nesse cenário, sendo possível uma exclusão deles do log de eventos.
+# cut 6 first activity != open and last activity != closed
 
-```{r activity vs first activity plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+out_activity <- df_final5 %>%
+  dplyr::filter(!first_activity %in% c('open') | !last_activity %in% c('closed')) %>%
+  select(incident_id) %>%
+  distinct()
 
-fig1 <- x %>% group_by(incident_id) %>% dplyr::filter(incidentactivity_type == first_activity) %>% count(incidentactivity_type) %>%
+out_activity <- as.vector(out_activity$incident_id)
+
+df_final6 <- df_final5 %>%
+            dplyr::filter(!incident_id %in% out_activity)
+
+df_final6 <- df_final6 %>% 
+  group_by(incident_id) %>%
+  mutate(first_activity = first(incidentactivity_type)
+        ,last_activity = last(incidentactivity_type)
+        ,first_day = strptime(first(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
+        ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
+        ,date = as.Date(date)
+        ) 
+
+df_final6$activity_resolution_secs <- unlist(tapply(df_final6$datestamp, INDEX = df_final6$incident_id,
+                          FUN = function(x) c(0, `units<-`(diff(x), "secs"))))
+
+write.csv(df_final6, file = "cleaning_dataset/pt4/Detail_Incident_Activity_cut6_pt4.csv", sep=";")
+
+ncases_activitydiffopenclosed <- n_distinct(df_final6$incident_id)
+nevents_activitydiffopenclosed <- nrow(df_final6)
+
+```
+
+
+# CUT 6: Atividade inicial e final de um Case Id {.tabset .tabset-fade}
+
+Após o último corte, agora, parece razoável excluirmos os cases que não possuem a atividade inicial 'open' ou atividade final 'closed' pois são em cases que possuem em média de 1 a 4 dias de duração mesmo ocorrendo alguns cases com duração maior que 8 dias.
+
+
+O dataset resultante contém `r nevents_activitydiffopenclosed` eventos, `r ncases_activitydiffopenclosed` cases e 14 variáveis (já mencionadas anteriormente). A análise dos cases removidos, olhando a visão tempo de resolução, pode ser analisada abaixo.
+
+```{r resolution cases not open or closed, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+fig1 <- df_final5 %>% group_by(incident_id) %>% dplyr::filter(incident_id %in% out_activity) %>%
     plot_ly(
-          x = ~n, y = ~incidentactivity_type, 
-          color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
+          x = ~case_resolution_days,# y = ~incidentactivity_type, 
+          #color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
           showlegend = TRUE,
           type = "box", orientation = 'h'
         ) %>% 
     #    plotly::layout(boxmode = "group") %>% #, legend = .y
         add_annotations(
-          text = "Repetição das atividades iniciais\n dentro de um case id que não inicia com 'open'", 
-          x = -0.1, y = 1,
+          text = "CUT 6: Duração dos cases que não possuem atividade inicial 'open' ou final 'closed'", 
+          x = 0.1, y = 1,
           yref = "paper", xref = "paper",
           xanchor = "middle", yanchor = "bottom",
           showarrow = FALSE, font = list(size = 15)
         ) 
 
 fig1
-
 ```
 
-## Atividades finais de Cases que não terminam com a atividade 'closed'
-
-```{r last activity in activitys, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-inds = which(df_final2$last_activity != 'closed')
-# We use lapply() to get all rows for all indices, result is a list
-rows <-lapply(inds, function(x) (x))
-# With unlist() you get all relevant rows
-x <- df_final2[unlist(rows),]
-
-n_cases <- n_distinct(x$incident_id)
-```
-
-```{r activity vs last activity plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-
-fig1 <- x %>% group_by(incident_id) %>% dplyr::filter(incidentactivity_type == last_activity) %>% count(incidentactivity_type) %>%
-    plot_ly(
-          x = ~n, y = ~incidentactivity_type, 
-          color = ~incidentactivity_type, legendgroup=~incidentactivity_type,
-          showlegend = TRUE,
-          type = "box", orientation = 'h'
-        ) %>% 
-    #    plotly::layout(boxmode = "group") %>% #, legend = .y
-        add_annotations(
-          text = "Repetição das atividades finais\n dentro de um case id que não termina com 'closed'", 
-          x = -0.1, y = 1,
-          yref = "paper", xref = "paper",
-          xanchor = "middle", yanchor = "bottom",
-          showarrow = FALSE, font = list(size = 15)
-        ) 
-
-fig1
-
-```
-
-# Outras Análises
-
-## Atividade "reassignment" x Recurso
-
-```{r activity vs resource plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
 
-fig2 <- df_final2 %>% group_by(incident_id,assignment_group) %>% dplyr::filter(incidentactivity_type == 'reassignment') %>% count(incidentactivity_type) %>%
+```{r activity vs resource plot, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+
+fig2 <- df_final6 %>% group_by(incident_id,assignment_group) %>% dplyr::filter(incidentactivity_type == 'reassignment') %>% count(incidentactivity_type) %>%
     plot_ly(
           x = ~n, y = ~assignment_group, 
           color = ~assignment_group, legendgroup=~assignment_group,
@@ -453,12 +614,9 @@ fig2
 ```
 
 
-## Dias de Resolução x Recurso (w/median) {.tabset .tabset-fade}
+```{r resolution days vs resource, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
-
-```{r resolution days vs resource, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-
-res <- boxplot(df_final2$case_resolution_days ~ df_final2$assignment_group)
+res <- boxplot(df_final6$case_resolution_days ~ df_final6$assignment_group)
 
 median <- res[["stats"]][3,]
 resource <- res[["names"]]
@@ -470,13 +628,12 @@ resource_resolution_median <- data.frame(assignment_group = resource, resource_m
                                 'Acima de 6 dias'),
                      include.lowest = T))
 
-df_box_resolution <- df_final2 %>% full_join(resource_resolution_median)
+df_box_resolution <- df_final6 %>% full_join(resource_resolution_median)
 
 ```
 
-### Media < 2 dias
 
-```{r resolution days vs resource plot than less 2 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r resolution days vs resource plot than less 2 days, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 df_box_resolution %>% dplyr::filter(Faixa == 'Menos que 2 dias') %>%
     plot_ly(
@@ -496,9 +653,8 @@ df_box_resolution %>% dplyr::filter(Faixa == 'Menos que 2 dias') %>%
 
 ```
 
-### Media 2 a 4 dias
 
-```{r resolution days vs resource plot 2 to 4 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r resolution days vs resource plot 2 to 4 days, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 df_box_resolution %>% dplyr::filter(Faixa == 'Entre 2 e 3.99 dias') %>%
     plot_ly(
@@ -518,9 +674,8 @@ df_box_resolution %>% dplyr::filter(Faixa == 'Entre 2 e 3.99 dias') %>%
 
 ```
 
-### Media 4 a 6 dias
 
-```{r resolution days vs resource plot 4 to 6 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r resolution days vs resource plot 4 to 6 days, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 df_box_resolution %>% dplyr::filter(Faixa == 'Entre 4 e 5.99 dias') %>%
     plot_ly(
@@ -540,9 +695,8 @@ df_box_resolution %>% dplyr::filter(Faixa == 'Entre 4 e 5.99 dias') %>%
 
 ```
 
-### Acima 6 dias
 
-```{r resolution days vs resource plot than more 6 days, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r resolution days vs resource plot than more 6 days, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 df_box_resolution %>% dplyr::filter(Faixa == 'Acima de 6 dias') %>%
     plot_ly(
