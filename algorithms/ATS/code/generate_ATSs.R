@@ -16,7 +16,7 @@ exec_all_horizons <- function(h=HORIZONS,s,runId,training_fn,validation_fn)
 # ----- MAIN FUNCTION ------
 
 #
-# essa versão executa apenas um horizonte
+# essa vers?o executa apenas um horizonte
 #
 main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, runId, training_fn,validation_fn)
 {
@@ -80,7 +80,7 @@ main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, r
       # prediction over the validation data set
       testingFold <- NULL
       if (EXECUTION_SIZE == Inf)
-         testingFold <- read.csv(file=file.path("../sublogs/preprocessed", validation_fn)) 
+         testingFold <- read.csv(file=file.path("algorithms/ATS/sublogs/grupo4/preprocessed", validation_fn)) 
       else
          testingFold <- read.csv(file=file.path("../sublogs/preprocessed", validation_fn),nrows = EXECUTION_SIZE)
       
@@ -115,13 +115,13 @@ main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, r
 }
 
 
-# objetivo: avaliar soluções para tratar non-fitting
+# objetivo: avaliar solu??es para tratar non-fitting
 
 # make sure that all the important constants are set before start
-TRACE_ID_COLUMN_NAME <- "number"
-STATUS_COLUMN_NAME <- "incident_state"
-EVENT_TIMESTAMP_COLUMN_NAME <- "updated_at"
-CLOSED_STATUS_VALUE <- "Closed"
+TRACE_ID_COLUMN_NAME <- "incident_id"
+STATUS_COLUMN_NAME <- "incidentactivity_type"
+EVENT_TIMESTAMP_COLUMN_NAME <- "datestamp"
+CLOSED_STATUS_VALUE <- "closed"
 REMOVE_LONGER_CASES <- FALSE
 
 SEARCH_SIMILAR <- FALSE
@@ -134,9 +134,9 @@ SAVE_MODEL <- FALSE
 LAST_RUN_MODEL <- NULL
 LAST_RUN_PREDICT <- NULL
 
-EXECUTION_DESCRIPTION <- "Corrected %s - COP 2021"
-   EXECUTION_LOCATION <- "mac-thais"
-EXECUTION_FILE_PREFIX <- "Apr21"
+EXECUTION_DESCRIPTION <- "Corrected %s - G4 2022"
+   EXECUTION_LOCATION <- "pc-lari"
+EXECUTION_FILE_PREFIX <- "Jan22"
 EXECUTION_SIZE <- Inf # 104
 
 HORIZONS <- c(1,3,5,6,7,Inf)
@@ -145,13 +145,16 @@ HORIZONS <- c(1,3,5,6,7,Inf)
 # incident_state, category and priority (expert selection)
 
 selected_horizon <- c(1)
-selected_attributes <- c("incident_state", "category", "priority") # expert
+selected_attributes <- c("incidentactivity_type"
+                         , "assignment_group"
+                         , "km_number"
+                         ) # expert
 
 
 
-# lista de arquivos já carregados no pré-proc
-# pre-proc foi alterado nessa execução para não renomear os arquivos
-files <- list.files("../sublogs/preprocessed/")
+# lista de arquivos j? carregados no pr?-proc
+# pre-proc foi alterado nessa execu??o para n?o renomear os arquivos
+files <- list.files("../sublogs/preprocessed/grupo4")
 print(files)
 print(files[1])
 tamanho <- length(files)
