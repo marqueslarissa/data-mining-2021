@@ -55,7 +55,7 @@ Esse documento tem o objetivo de elucidar análises interessantes que surgirem c
 Depois de realizada todo o pré-processamento (exceto remoção de outliers) temos o dataset (log de eventos) contendo `r nevents_dfraw` eventos, `r ncases_dfraw` cases e 7 variáveis:
 
 * incident_id - Seria o nosso case id
-* km_number - `foi mencionado em algum artigo mas esqueci`
+* km_number - Seria o número do chamado no Service Desk
 * interaction_id - Seria o id da interação com algum recurso
 * datestamp - Data (%Y/%m/%d %H:%M:%S) da ocorrência da atividade
 * incidentactivity_number - Id da atividade
@@ -73,6 +73,11 @@ df<- df %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc          
         ) 
 
 df$activity_resolution_secs <- unlist(tapply(df$datestamp, INDEX = df$incident_id,
@@ -80,7 +85,7 @@ df$activity_resolution_secs <- unlist(tapply(df$datestamp, INDEX = df$incident_i
 ```
 
 
-Criamos algumas outras variáveis que serão utilizadas para outras análises:
+Criamos algumas outras variáveis que serão utilizadas para outras análises. As últimas 5 variáveis são necessárias para o algoritmo ATS:
 
 * date - Data (%Y/%m/%d) da ocorrência da atividade
 * first_activity - Primeira atividade do trace
@@ -89,6 +94,11 @@ Criamos algumas outras variáveis que serão utilizadas para outras análises:
 * last_day - Data da última atividade do trace
 * case_resolution_days - Intervalo entre last_day e first_day (Tempo de resolução em dias)
 * activity_resolution_secs - Intervalo entre uma atividade e outra dentro do mesmo caso (Tempo de transição em segundos)
+* opened_at_stc = variavel first_day em unix timestamp
+* updated_at_stc = variavel datestamp em unix timestamp
+* closed_at_stc = variável last_day em unix timestamp
+* elapsed_stc = tempo decorrido (updated_at_stc - opened_at_stc)
+* remaining_stc = tempo restante (closed_at_stc - updated_at_stc)
 
 ```{r cut1, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
 
@@ -122,6 +132,11 @@ df_final1<- df_final1 %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc      
         ) 
 
 df_final1$activity_resolution_secs <- unlist(tapply(df_final1$datestamp, INDEX = df_final1$incident_id,
@@ -141,9 +156,9 @@ Para entender como está distribuído as atividades no tempo foi feito dois grá
 
 Logo no primeiro momento foi possível visualizar que tem períodos onde a massa de atividades é menor em comparação com outros, por exemplo, antes de Setembro/2013 e depois de Abril/2014. Essa análise foi facilmente confirmada no segundo momento com um gráfico de densidade;
 
-* <b>CUT 1</b> - Realizamos um primeiro corte onde é removido <b>todos os Cases</b> (incident_id) que possuem atividades de algum desses períodos, mantendo então os cases que possuem atividades de Outubro/2012 a Março/2014. Encontramos um artigo onde foi mencionado a presença de outliers de `x a x data que eu não me recordo, infelizmente`
+* <b>CUT 1</b> - Realizamos um primeiro corte onde é removido <b>todos os Cases</b> (incident_id) que possuem atividades de algum desses períodos, mantendo então os cases que possuem atividades de Outubro/2012 a Março/2014. Encontramos um artigo onde foi mencionado a presença de outliers de 01/08/2013 a 31/03/2014.
 
-O dataset resultante contém `r nevents_outdates` eventos, `r ncases_outdates` cases e 14 variáveis (já mencionadas anteriormente). A comparação de ambos períodos é possível ver abaixo.
+O dataset resultante contém `r nevents_outdates` eventos, `r ncases_outdates` cases e 19 variáveis (já mencionadas anteriormente). A comparação de ambos períodos é possível ver abaixo.
 
 > É notável que ocorre um padrão no inicio/final de cada mês, vendo somente a ocorrência das datas das atividades;
 
@@ -217,6 +232,11 @@ df_final2<- df_final2 %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc        
         ) 
 
 df_final2$activity_resolution_secs <- unlist(tapply(df_final2$datestamp, INDEX = df_final2$incident_id,
@@ -240,7 +260,7 @@ A mesma ideia é de cases onde o tempo de resolução excede os 10 dias, olhando
 
 * <b>CUT 2</b> - Realizamos um segundo corte onde é removido <b>todos os Cases</b> (incident_id) que possuem tempo de resolução menor que 1 dia e maior que 10 dias. 
 
-O dataset resultante contém `r nevents_outresolution` eventos, `r ncases_outresolution` cases e 14 variáveis (já mencionadas anteriormente). A comparação de todos os cortes realizados, olhando a visão tempo de resolução, pode ser analisada abaixo.
+O dataset resultante contém `r nevents_outresolution` eventos, `r ncases_outresolution` cases e 19 variáveis (já mencionadas anteriormente). A comparação de todos os cortes realizados, olhando a visão tempo de resolução, pode ser analisada abaixo.
 
 > Curiosamente também podemos observar que pode ser que haja um padrão no tempo de resolução do case;
 
@@ -328,6 +348,11 @@ df_final3<- df_final3 %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc         
         ) 
 
 df_final3$activity_resolution_secs <- unlist(tapply(df_final3$datestamp, INDEX = df_final3$incident_id,
@@ -347,7 +372,7 @@ nevents_outmeanactivitys <- nrow(df_final3)
 
 * <b>CUT 3</b> - Utilizando o boxsplot é possível fazer um corte inicial no 3º quartil (Q3 75% dos dados presentes) indicando que teremos por volta de 15 eventos por case.
 
-O dataset resultante contém `r nevents_outmeanactivitys` eventos, `r ncases_outmeanactivitys` cases e 14 variáveis (já mencionadas anteriormente). A comparação com o último o corte realizado, olhando a visão da quantidade eventos, pode ser analisada abaixo.
+O dataset resultante contém `r nevents_outmeanactivitys` eventos, `r ncases_outmeanactivitys` cases e 19 variáveis (já mencionadas anteriormente). A comparação com o último o corte realizado, olhando a visão da quantidade eventos, pode ser analisada abaixo.
 
 
 ```{r n activity vs n cases plot, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -397,6 +422,11 @@ df_final4<- df_final4 %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc          
         ) 
 
 df_final4$activity_resolution_secs <- unlist(tapply(df_final4$datestamp, INDEX = df_final4$incident_id,
@@ -417,7 +447,7 @@ nevents_repeatedactivitys <- nrow(df_final4)
   * Muitas das variaveis que se repetem em um case id podem provocar loops e, dentro do log de eventos, tais atividades que se destacam são mais "qualitativas", ou seja, relacionadas a integridade do log e também na questão da satisfação do cliente, outras são bastante especificas relacionadas à alguma alteração de recursos ou até geradas por ação do cliente. 
   * Foi retirado então todas as atividades repetidas de cada case id.
   
-O dataset resultante contém `r nevents_repeatedactivitys` eventos, `r ncases_repeatedactivitys` cases e 14 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão da repetição de atividades em um case, pode ser analisada abaixo.
+O dataset resultante contém `r nevents_repeatedactivitys` eventos, `r ncases_repeatedactivitys` cases e 19 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão da repetição de atividades em um case, pode ser analisada abaixo.
 
 > Com esse corte conseguimos melhorar o desempenho de algoritimos que não lidam bem com repetição de eventos.
 
@@ -471,6 +501,11 @@ df_final5<- df_final5 %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc      
         ) 
 
 df_final5$activity_resolution_secs <- unlist(tapply(df_final5$datestamp, INDEX = df_final5$incident_id,
@@ -497,7 +532,7 @@ Aparentemente, não precisamos excluir todos os cases que não começam com 'ope
 
 Olhando as atividades que possuem media menor que 300 segundos (5 minutos) a mesma questao levantada no corte anterior aparece, exceto pela atividade 'open' que pode estar ocorrendo durante um case, esta atividade manteremos.
 
-O dataset resultante contém `r nevents_resolutionactivity` eventos, `r ncases_resolutionactivity` cases e 14 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão tempo de resolução da atividade, pode ser analisada abaixo.
+O dataset resultante contém `r nevents_resolutionactivity` eventos, `r ncases_resolutionactivity` cases e 19 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão tempo de resolução da atividade, pode ser analisada abaixo.
 
 > Poderemos olhar o 3º Quartil caso seja necessário, em outro momento.
 
@@ -547,6 +582,11 @@ df_final6 <- df_final6 %>%
         ,last_day =  strptime(last(datestamp), format="%Y-%m-%d %H:%M:%S")
         ,case_resolution_days = as.numeric(difftime(last_day, first_day, units = "days"))
         ,date = as.Date(date)
+        ,opened_at_stc = as.numeric(as.POSIXct(first(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,updated_at_stc = as.numeric(as.POSIXct(datestamp, format="%Y-%m-%d %H:%M:%S"))
+        ,closed_at_stc = as.numeric(as.POSIXct(last(datestamp), format="%Y-%m-%d %H:%M:%S"))
+        ,elapsed_stc = updated_at_stc-opened_at_stc
+        ,remaining_stc = closed_at_stc-updated_at_stc
         ) 
 
 df_final6$activity_resolution_secs <- unlist(tapply(df_final6$datestamp, INDEX = df_final6$incident_id,
@@ -565,7 +605,7 @@ nevents_activitydiffopenclosed <- nrow(df_final6)
 Após o último corte, agora, parece razoável excluirmos os cases que não possuem a atividade inicial 'open' ou atividade final 'closed' pois são em cases que possuem em média de 1 a 4 dias de duração mesmo ocorrendo alguns cases com duração maior que 8 dias.
 
 
-O dataset resultante contém `r nevents_activitydiffopenclosed` eventos, `r ncases_activitydiffopenclosed` cases e 14 variáveis (já mencionadas anteriormente). A análise dos cases removidos, olhando a visão tempo de resolução, pode ser analisada abaixo.
+O dataset resultante contém `r nevents_activitydiffopenclosed` eventos, `r ncases_activitydiffopenclosed` cases e 19 variáveis (já mencionadas anteriormente). A análise dos cases removidos, olhando a visão tempo de resolução, pode ser analisada abaixo.
 
 ```{r resolution cases not open or closed, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
