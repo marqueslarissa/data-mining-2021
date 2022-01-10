@@ -26,7 +26,7 @@ main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, r
    require(sets) # before dplyr, data.table
    require(dplyr) # pbefore data.table
    require(data.table)
-   generate_log(" ************* Initiating Execution (TH Version) *************", 1)
+   generate_log(" ************* Initiating Execution (LM Version) *************", 1)
    generate_log(EXECUTION_DESCRIPTION)
    generate_log(paste(" REMOVE_LONGER_CASES == ",REMOVE_LONGER_CASES))
    if ( SEARCH_SIMILAR )
@@ -46,9 +46,9 @@ main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, r
    
    trainingFold <- NULL
    if (EXECUTION_SIZE == Inf)
-      trainingFold <- read.csv(file=file.path("../sublogs/preprocessed", training_fn)) 
+      trainingFold <- read.csv(file=file.path("../sublogs/grupo4/preprocessed", training_fn)) 
    else
-      trainingFold <- read.csv(file=file.path("../sublogs/preprocessed", training_fn),nrows = EXECUTION_SIZE)
+      trainingFold <- read.csv(file=file.path("../sublogs/grupo4/preprocessed", training_fn),nrows = EXECUTION_SIZE)
    
    
    #option to remove from the training the outliers with elapsed time much bigger
@@ -80,9 +80,9 @@ main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, r
       # prediction over the validation data set
       testingFold <- NULL
       if (EXECUTION_SIZE == Inf)
-         testingFold <- read.csv(file=file.path("algorithms/ATS/sublogs/grupo4/preprocessed", validation_fn)) 
+         testingFold <- read.csv(file=file.path("../sublogs/grupo4/preprocessed", validation_fn)) 
       else
-         testingFold <- read.csv(file=file.path("../sublogs/preprocessed", validation_fn),nrows = EXECUTION_SIZE)
+         testingFold <- read.csv(file=file.path("../sublogs/grupo4/preprocessed", validation_fn),nrows = EXECUTION_SIZE)
       
       
       # builds the transition system for teh testing fold
@@ -118,9 +118,9 @@ main <- function(horizon=selected_horizon, sel_attributes=selected_attributes, r
 # objetivo: avaliar solu??es para tratar non-fitting
 
 # make sure that all the important constants are set before start
-TRACE_ID_COLUMN_NAME <- "incident_id"
-STATUS_COLUMN_NAME <- "incidentactivity_type"
-EVENT_TIMESTAMP_COLUMN_NAME <- "datestamp"
+TRACE_ID_COLUMN_NAME <- "number"
+STATUS_COLUMN_NAME <- "incident_state"
+EVENT_TIMESTAMP_COLUMN_NAME <- "updated_at"
 CLOSED_STATUS_VALUE <- "closed"
 REMOVE_LONGER_CASES <- FALSE
 
@@ -145,7 +145,7 @@ HORIZONS <- c(1,3,5,6,7,Inf)
 # incident_state, category and priority (expert selection)
 
 selected_horizon <- c(1)
-selected_attributes <- c("incidentactivity_type"
+selected_attributes <- c("incident_state"
                          , "assignment_group"
                          , "km_number"
                          ) # expert
@@ -154,9 +154,10 @@ selected_attributes <- c("incidentactivity_type"
 
 # lista de arquivos j? carregados no pr?-proc
 # pre-proc foi alterado nessa execu??o para n?o renomear os arquivos
-files <- list.files("../sublogs/preprocessed/grupo4")
+files <- list.files("../sublogs/grupo4/preprocessed")
 print(files)
 print(files[1])
+print(files[2])
 tamanho <- length(files)
 print(paste("Quantidade de arquivos a serem processados: ",tamanho))
 
