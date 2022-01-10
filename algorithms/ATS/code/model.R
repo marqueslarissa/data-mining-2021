@@ -3,7 +3,7 @@ NIL_STATE <- -1
 
 
 #' funcao de construcao do MTA, recebe o trace, lista de instancias
-#' Código fonte original
+#' C?digo fonte original
 #'
 #' @param events : list of events
 #' @param horiz : the horizon
@@ -16,14 +16,14 @@ NIL_STATE <- -1
 build_ats <- function(aevents, horiz, sel_attributes)
 {
    
-   # mudanças nos nomes das variáveis
-   #  nome no código original    novo nome
+   # mudan?as nos nomes das vari?veis
+   #  nome no c?digo original    novo nome
    #  asel_traces_lcl            events
    #  sel_traces_lcl             events (copy)
    #  process_instances          traces
    #  trace                      traceEvents
    
-   events <- aevents  # necessário para atualizar a lista original no final da execução
+   events <- aevents  # necess?rio para atualizar a lista original no final da execu??o
    
    generate_log(paste("Starting build_ats for horizon",horiz,"and attributes [",paste( unlist(sel_attributes), collapse=', '),"]"),2)
    
@@ -169,7 +169,7 @@ build_ats <- function(aevents, horiz, sel_attributes)
    events$mset_nf <- 0
    events$seq_nf <- 0
    
-   # retorna resultado - precisa atualizar a lista de eventos original, para os cálculos
+   # retorna resultado - precisa atualizar a lista de eventos original, para os c?lculos
    eval.parent(substitute(aevents<-events))
    
    generate_log("   Summarizing the values for the model",2)
@@ -207,8 +207,8 @@ build_ats <- function(aevents, horiz, sel_attributes)
 }
 
 
-#' Cálculo de Sojourn usado na primeira execução completa
-#' Não é o código original - foi modificado para seguir mais na linha do que foi
+#' C?lculo de Sojourn usado na primeira execu??o completa
+#' N?o ? o c?digo original - foi modificado para seguir mais na linha do que foi
 #' proposto pelo van der Aalst no artigo de Time Prediction
 #'
 #' @param traceEvents
@@ -260,10 +260,10 @@ calculate_sojourn_v1 <- function(aTraceEvents) {
 
 
 
-#' Cálculo de Sojourn versão 2
-#' (na verdade, versão 3 se considerar a 1a como sendo a do código original)
-#' Neste caso a alteração é que o resultado do sojourn calculado deverá atualizar a
-#' célula j-1 e não a j.
+#' C?lculo de Sojourn vers?o 2
+#' (na verdade, vers?o 3 se considerar a 1a como sendo a do c?digo original)
+#' Neste caso a altera??o ? que o resultado do sojourn calculado dever? atualizar a
+#' c?lula j-1 e n?o a j.
 #'
 #' @param traceEvents
 #'
@@ -328,7 +328,7 @@ build_prediction <- function(aevents, ats)
 {
    generate_log("Starting build_prediction",2)
    
-   events <- aevents  # necessário para atualizar a lista original no final da execução
+   events <- aevents  # necess?rio para atualizar a lista original no final da execu??o
    
    traces <- distinct_(events, TRACE_ID_COLUMN_NAME)
    
@@ -502,7 +502,7 @@ build_prediction <- function(aevents, ats)
       
    } # end loop over all the traces
    
-   # retorna resultado - precisa atualizar a lista de eventos original, para os cálculos
+   # retorna resultado - precisa atualizar a lista de eventos original, para os c?lculos
    eval.parent(substitute(aevents<-events))
    
    mta_model <- list(traces_states=traces_states,
@@ -696,15 +696,15 @@ annotate_model <- function(fold_events, resultFile, type, fold, horiz, model)
    )
    names(non_fit_per_arr) <- c("NF_PERC_SET","NF_PERC_MSET","NF_PERC_SEQ")
    
-   # Alexandre: precisa remover esse cálculo aqui, não faz nenhum sentido repetir esse valor
-   # vide comentário na função original - isso era um mínimo entre média e mediana
+   # Alexandre: precisa remover esse c?lculo aqui, n?o faz nenhum sentido repetir esse valor
+   # vide coment?rio na fun??o original - isso era um m?nimo entre m?dia e mediana
    #perr_tot_arr <- c(mape_val[c("val_mape_pset_mean")],
    #                  mape_val[c("val_mape_pmset_mean")],
    #                  mape_val[c("val_mape_pseq_mean")])
    #
    #names(perr_tot_arr) <- c("perr_tot_set","perr_tot_mset","perr_tot_seq")
    
-   # Substituindo número anterior pelo desvio padrão do erro
+   # Substituindo n?mero anterior pelo desvio padr?o do erro
    error_sd <- c(
       sd(events_anot_filtered$remaining_stc-events_anot_filtered$predict_remain_set),
       sd(events_anot_filtered$remaining_stc-events_anot_filtered$predict_remain_mset),
@@ -780,8 +780,8 @@ annotate_model <- function(fold_events, resultFile, type, fold, horiz, model)
 }
 
 
-#' Fórmula 1 para o cálculo da predição, que leva em conta o sojourn atual e a média
-#' de sojourn no estado. É a fórmula do código original.
+#' F?rmula 1 para o c?lculo da predi??o, que leva em conta o sojourn atual e a m?dia
+#' de sojourn no estado. ? a f?rmula do c?digo original.
 #'
 #' @param events_anot
 #'
@@ -812,7 +812,7 @@ calculate_prediction_with_sojourn <- function(aevents_anot) {
    
 }
 
-#' Fórmula 2, que leva em conta apenas a média do remaining.
+#' F?rmula 2, que leva em conta apenas a m?dia do remaining.
 #'
 #' @param events_anot
 #'
