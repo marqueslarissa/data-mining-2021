@@ -484,7 +484,7 @@ activitys <- res[["names"]]
 
 x <- data.frame(activity = activitys, median = median)
 
-cutmean <- x %>% dplyr::filter(median < 300 & activity != 'open') 
+cutmean <- x %>% dplyr::filter(median == 0 & activity != 'open') 
 
 cutmean <- as.vector(cutmean$activity)
 
@@ -530,7 +530,7 @@ Aparentemente, não precisamos excluir todos os cases que não começam com 'ope
 * Ver em média a duração de cada atividade em horas, atividades consideradas curtas poderiam ser ignoradas no case visto que demandariam baixo "custo" pro atendimento.
   * <b>CUT 5</b> - A segunda opção, inicialmente, parece ser mais razoável além de que assim o log de eventos poderá ter menos ruídos, visto que atividades que durarem em média 0 segundos não parece ser atividades que dependem necessariamente de um recurso. Podem, inclusive, serem atividades automatizadas pelo sistema.
 
-Olhando as atividades que possuem media menor que 300 segundos (5 minutos) a mesma questao levantada no corte anterior aparece, exceto pela atividade 'open' que pode estar ocorrendo durante um case, esta atividade manteremos.
+Olhando as atividades que possuem media 0 segundos a mesma questao levantada no corte anterior aparece, exceto pela atividade 'open' que pode estar ocorrendo durante um case, esta atividade manteremos.
 
 O dataset resultante contém `r nevents_resolutionactivity` eventos, `r ncases_resolutionactivity` cases e 19 variáveis (já mencionadas anteriormente). A análise dos eventos removidos, olhando a visão tempo de resolução da atividade, pode ser analisada abaixo.
 
