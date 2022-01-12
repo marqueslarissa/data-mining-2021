@@ -1,0 +1,16 @@
+2022-01-12 04:11:01 :  ************* Initiating Execution (LM Version) *************
+2022-01-12 04:11:02 : Rabobank Log - Grupo 4 2022
+2022-01-12 04:11:02 :  REMOVE_LONGER_CASES ==  FALSE
+2022-01-12 04:11:02 :  SEARCH FOR SIMILARITY =  FALSE  (searching only exact matches)
+2022-01-12 04:11:02 : Training file:  ATS_6040_1_TRAIN_PREPROCESSED_Detail_Incident_Activity_cut6.csv Validation file: ATS_6040_2_TEST_PREPROCESSED_Detail_Incident_Activity_cut6.csv
+2022-01-12 04:11:02 : Starting build_ats for horizon 1 and attributes [ incident_state, assignment_group, km_number ]
+2022-01-12 04:11:02 :    Starting loops over all traces
+2022-01-12 04:12:02 :    Ending loops over all traces
+2022-01-12 04:12:02 :    Summarizing the values for the model
+2022-01-12 04:12:08 : Ended build_ats
+2022-01-12 04:12:08 : Annotating the model...
+2022-01-12 04:12:08 : Starting build_prediction for horizon one, exact search
+2022-01-12 04:12:34 : Ended build_prediction
+2022-01-12 04:12:34 : Annotating the model...
+2022-01-12 04:12:34 : Stat file generated: [Jan22_ATS_6040_1_TRAIN_PREPROCESSED_Detail_Incident_Activity_cut6_h1_STATS.csv]
+2022-01-12 04:12:34 : Step completed successfully.

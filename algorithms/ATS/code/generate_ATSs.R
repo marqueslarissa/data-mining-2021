@@ -144,7 +144,7 @@ HORIZONS <- c(1,3,5,6,7,Inf)
 # these were the best horizons selected according to the tests using the
 # incident_state, category and priority (expert selection)
 
-selected_horizon <- c(1)
+selected_horizon <- c(Inf)
 selected_attributes <- c("incident_state"
                          , "assignment_group"
                          , "km_number"
@@ -164,17 +164,21 @@ print(paste("Quantidade de arquivos a serem processados: ",tamanho))
 #for (k in 1:3) {
 #   cat(paste("=========== Parte",k,"==========="))
 #   cat("","","",sep="\n")
-   for (j in 1:tamanho)
+   for (j in 1:tamanho-1)
    {
-      filen <- files[j]
-      id <- gsub(".csv", "", files[j])
-      
-      cat(paste("======== id: ", j, ", file:",filen,"========"))
-      cat("","",sep="\n")
-      set_log_file(paste("../results/logs/log_",id,".txt",sep=""))
-      r <- exec_all_horizons(h=selected_horizon,selected_attributes,id,filen,NULL)
-      close_log_file()
-      Sys.sleep(time = 60) # needed to make sure that the log file is distinct from the previous one
+      if (j %% 2 == 0) 
+      {
+         filen <- files[j+1]
+         filenn <- files[j+2]
+         id <- gsub(".csv", "", files[j+1])
+         
+         cat(paste("======== id: ", j, ", file:",filen,"========"))
+         cat("","",sep="\n")
+         set_log_file(paste("../results/logs/log_",id,".txt",sep=""))
+         r <- exec_all_horizons(h=selected_horizon,selected_attributes,id,filen,filenn)
+         close_log_file()
+         Sys.sleep(time = 60) # needed to make sure that the log file is distinct from the previous one
+      }
    }
 #   id_orig <- id_orig + 100
 #}
