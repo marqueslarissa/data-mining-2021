@@ -8,7 +8,7 @@ Author: Niek Tax
 from __future__ import division
 import unicodecsv
 
-eventlog = "helpdesk.csv"
+eventlog = "LSTM_1_TRAIN_PREPROCESSED_Detail_Incident_Activity_cut6.csv"
 csvfile = open('output_files/results/suffix_and_remaining_time_%s' % eventlog, 'r')
 r = unicodecsv.reader(csvfile ,encoding='utf-8')
 r.next() # header

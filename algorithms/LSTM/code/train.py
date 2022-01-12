@@ -21,7 +21,7 @@ from keras.layers.normalization import BatchNormalization
 from collections import Counter
 import unicodecsv
 import numpy as np
-import random
+import random2
 import sys
 import os
 import copy
@@ -32,7 +32,7 @@ from datetime import datetime
 from math import log
 
 
-eventlog = "helpdesk.csv"
+eventlog = "LSTM_1_TRAIN_PREPROCESSED_Detail_Incident_Activity_cut6.csv"
 
 ########################################################################################
 #

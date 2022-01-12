@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from collections import Counter
 
-eventlog = "helpdesk.csv"
+eventlog = "LSTM_1_TRAIN_PREPROCESSED_Detail_Incident_Activity_cut6.csv"
 csvfile = open('../data/%s' % eventlog, 'r')
 spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
 next(spamreader, None)  # skip the headers
