@@ -1,0 +1,607 @@
+---
+title: "Resultados"
+author: "Grupo 4"
+date: "`r Sys.Date()`"
+output:  
+  rmdformats::readthedown:
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+    css: style.css
+---
+
+```{css, echo=FALSE}
+
+:root {
+  --master: #0176f4;
+  --prim: #004998;
+}
+
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+
+library(reshape2)
+library(glue)
+library(reactable)
+library(dplyr)
+library(tidyr)
+library(plotly)
+library(openxlsx)
+library(gridExtra)
+library(kableExtra)
+library(lubridate)
+library(gganimate)
+library(stringr)
+library(DT)
+library(ks)
+library(cowplot)
+
+```
+
+
+```{r extract, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, message=FALSE}
+cols_metric <- c('RMSPE_SET','RMSPE_MSET','RMSPE_SEQ','MAPE_SET','MAPE_MSET','MAPE_SEQ', 'NF_PERC_SET','NF_PERC_MSET', 'NF_PERC_SEQ')
+options(digits=5)
+
+# Get file list
+file_list <- list.files("algorithms/ATS/results/stats", pattern="*.csv", full.names=TRUE)
+
+# Read all csv files in the folder and create a list of dataframes
+ldf <- lapply(file_list , function(i){
+  read.csv(i, sep=';' )})
+
+# Combine each dataframe in the list into a single dataframe
+df.final <- do.call("rbind", ldf)
+
+df.final[cols_metric] <- lapply(df.final[cols_metric], function(i){
+ # as.numeric(gsub(".","",i,fixed=TRUE))
+  as.numeric(str_extract(i, "\\d+[:punct:]\\d\\d"))
+  }
+  )
+
+
+
+```
+
+# Análise dos resultados
+
+Métricas dos testes para os diferentes conjuntos de treino e validação (60%/40%, 70%/30% e 80%/20%) juntamente com a % de casos Non-Fitting, ou seja, casos que aparecem no conjunto de validação e porém não no conjunto de treino.
+
+## Horizonte 1 {.tabset .tabset-fade}
+
+### RMSPE
+
+```{r horizon 1 RMSPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 1, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 1)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 1, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+### MAPE
+
+```{r horizon 1 MAPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 1, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 1)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 1, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET, showlegend=F) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET, showlegend=F) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+## Horizonte 3 {.tabset .tabset-fade}
+
+### RMSPE
+
+```{r horizon 3 RMSPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 3, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 3)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 3, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+
+### MAPE
+
+```{r horizon 3 MAPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 3, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 3)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 3, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET, showlegend=F) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET, showlegend=F) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+## Horizonte 5 {.tabset .tabset-fade}
+
+### RMSPE
+
+```{r horizon 5 RMSPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 5, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 5)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 5, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+
+### MAPE
+
+```{r horizon 5 MAPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 5, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 5)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 5, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET, showlegend=F) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET, showlegend=F) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+## Horizonte 6 {.tabset .tabset-fade}
+
+### RMSPE
+
+```{r horizon 6 RMSPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 6, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 1)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 6, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+
+### MAPE
+
+```{r horizon 6 MAPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 6, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 6)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 6, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET, showlegend=F) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET, showlegend=F) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+
+## Horizonte 7 {.tabset .tabset-fade}
+
+### RMSPE
+
+```{r horizon 7 RMSPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 7, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 7)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 7, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+### MAPE
+
+```{r horizon 7 MAPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == 7, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = 7)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == 7, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET, showlegend=F) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET, showlegend=F) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+## Horizonte Inf {.tabset .tabset-fade}
+
+### RMSPE
+
+```{r horizon Inf RMSPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == Inf, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = Inf)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == Inf, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~RMSPE_SET, type = 'bar', name = 'RMSPE SET', color='darkblue', legendgroup = ~RMSPE_SET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_MSET, name = 'RMSPE MSET', color='blue', legendgroup = ~RMSPE_MSET, showlegend=F) %>%
+  add_trace(y = ~RMSPE_SEQ, name = 'RMSPE SEQ', color='lightblue', legendgroup = ~RMSPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
+### MAPE
+
+```{r horizon Inf MAPE, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+Tr <- df.final %>%
+  dplyr::filter(horizon == Inf, fold == 'T') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ) %>% 
+  add_lines(y = ~NF_SET, name = '% NF SET', color='darkgreen', legendgroup = ~NF_SET) %>% 
+  add_lines(y = ~NF_MSET, name = '% NF MSET', color='green',  legendgroup = ~NF_MSET) %>% 
+  add_lines(y = ~NF_SEQ, name = '% NF SEQ', color='lightgreen', legendgroup = ~NF_SEQ) %>% 
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "(horizon = Inf)\t Treino", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+
+Vl <- df.final %>%
+  dplyr::filter(horizon == Inf, fold == 'V') %>%
+  plot_ly(x = ~cut, y =~MAPE_SET, type = 'bar', name = 'MAPE SET', color='darkblue', legendgroup = ~MAPE_SET, showlegend=F) %>%
+  add_trace(y = ~MAPE_MSET, name = 'MAPE MSET', color='blue', legendgroup = ~MAPE_MSET, showlegend=F) %>%
+  add_trace(y = ~MAPE_SEQ, name = 'MAPE SEQ', color='lightblue', legendgroup = ~MAPE_SEQ, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SET, name = '% NF SET',  color='darkgreen', legendgroup = ~NF_PERC_SET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_MSET, name = '% NF MSET',  color='green', legendgroup = ~NF_PERC_MSET, showlegend=F) %>% 
+  add_lines(y = ~NF_PERC_SEQ, name = '% NF SEQ', color='lightgreen',  legendgroup = ~NF_PERC_SEQ, showlegend=F) %>%   
+  plotly::layout(yaxis = list(title = 'value'), barmode = 'group') %>%  
+  add_annotations(
+          text = "Validação", 
+          x = 0.1, y = 1,
+          yref = "paper", xref = "paper",
+          xanchor = "middle", yanchor = "top",
+          showarrow = FALSE, font = list(size = 15)
+        ) 
+
+subplot(Tr,Vl, shareY = T)
+
+```
+
