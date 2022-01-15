@@ -1,0 +1,64 @@
+Qual é o tempo decorrido dos problemas que estão abertos? 
+> What is the elapsed time of open issues? 
+(EXCEPT)
+
+	select idcase problem_id, last_activity_datetime - first_activity_datetime elapsed_time
+	from (
+		select distinct 
+			idcase
+			, first_value(startdatetime) over(partition by idcase order by idevent range BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) first_activity_datetime	
+			, last_value(startdatetime) over(partition by idcase order by idevent range BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) last_activity_datetime		
+		from public.log6_excerpt29
+		group by startdatetime,idcase,idevent
+		except
+		select case when activity = 'Closed' then idcase end problem_closed		
+			, case when activity = 'Closed' then first_value(startdatetime) over(partition by idcase order by idevent range BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) end first_activity_datetime	
+			, case when activity = 'Closed' then last_value(startdatetime) over(partition by idcase order by idevent range BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) end last_activity_datetime		
+		from public.log6_excerpt29
+		group by startdatetime,idcase,idevent
+		) l6e29
+	
+	
+Quais são os problemas em aberto que tiveram atuação de mais de um recurso? 
+> What are the open issues that had actions of more than one resource?	
+(HAVING)
+
+	select idcase
+	from (
+		select case when activity = 'Closed' then true else false end problem_closed
+			,idcase
+			,resource	
+		from public.log6_excerpt29
+		) l6e29
+	group by idcase, problem_closed
+	having problem_closed != true and count(distinct resource) > 1
+	
+	
+	
+Quais ações judiciais possuem mais que um movimento processual começando com "Remetido"?
+> Which lawsuits have more than one procedural movement starting with "Remitted"?
+(LIKE)
+
+	select idcase lawsuits
+		 , activity procedural_movement
+		 , count(activity) qty
+	from public.log2_excerpt10
+	group by idcase, activity
+	having count(activity) > 1 and activity like 'Remetido%';
+	
+
+
+Qual é o número médio de vezes que um movimento processual aparece em uma ação judicial?
+> What is the average number of times a procedural movement appears in a lawsuit?
+(ORDER BY)
+
+	select procedural_movement
+		  , avg(qty) lawsuits_movement_avg
+	from (
+		select activity procedural_movement
+			   , count(activity) qty
+		from public.log2_excerpt10
+		group by idcase, activity
+		) l2e10
+	group by procedural_movement
+	order by lawsuits_movement_avg desc;
