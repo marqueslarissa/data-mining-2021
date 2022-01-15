@@ -73,6 +73,12 @@ df.final[cols_metric] <- lapply(df.final[cols_metric], function(i){
 
 Métricas dos testes para os diferentes conjuntos de treino e validação (60%/40%, 70%/30% e 80%/20%) juntamente com a % de casos Non-Fitting, ou seja, casos que aparecem no conjunto de validação e porém não no conjunto de treino.
 
+Decidimos por separar as visões entre os subconjuntos de treino e validação por realizarmos um pré-processamento para fins de estudo, utilizando somente de artefatos relacionados ao log de eventos e experiência com processos de sistemas ITIL para levantar questões que poderiam gerar ou não um impacto para o cliente. Foi instruído que cada manipulação do log de eventos em uma situação real deve ser acompanhada por um agente que conhece o processo de negócio e com isso, alterações drásticas no log são evitadas. 
+
+Após o corte 3, são realizados filtros com o objetivo de entender quais são as atividades que geram algum impacto para com quem realizou a abertura do incidente, evitando assim atividades que não tiveram mudanças significativas durante um case. Com isso, é esperado que apareçam erros com valores maiores nos resultados dos conjuntos de validação, bem como uma taxa de eventos non-fitting.
+
+A execução para o horizonte 1, ou seja, utilizando apenas um evento do caso, os modelos são os mesmos para as três abstrações o que faz sentido pois nessa configuração o evento atual para uma abstração será o mesmo para as demais, além disso a taxa non-fitting se manteve independente do erro. O conjunto utilizado com a configuração de treino e validação 60% e 40%, respectivamente, obteve um melhor desempenho em termos do erro.
+
 ## Horizonte 1 {.tabset .tabset-fade}
 
 ### RMSPE
@@ -161,7 +167,10 @@ subplot(Tr,Vl, shareY = T)
 
 ```
 
+
 ## Horizonte 3 {.tabset .tabset-fade}
+
+Os gráficos seguintes mostram mudanças nos resultados quando utilizado o horizonte 3, as abstrações SET e MSET continuam muito parecidas, apesar disso, em termos de casos non-fitting a abstração MSET chega a uma taxa muito inferior em comparação com a abstração SET para a configuração utilizando o conjunto de treino e validação 80% e 20% respectivamente, ao contrário do que é analisado para o conjunto 70% e 30% onde o desempenho do conjunto de validação está superior em comparação ao conjunto de treino em termos do erro RMSPE. A abstração SEQ somente possuí desempenho melhor ou parecido com as demais abstrações ao analisar os resultados em termos do erro MAPE, que possuí uma restrição em lidar com valores muito próximos de zero e por consequência um desempenho inferior aos resultados em temos de RMSPE.
 
 ### RMSPE
 
@@ -250,7 +259,12 @@ subplot(Tr,Vl, shareY = T)
 
 ```
 
+
 ## Horizonte 5 {.tabset .tabset-fade}
+
+Para os outros horizontes presentes na configuração, ou seja, horizontes 5, 6, 7 e Inf, os resultados para o erro MAPE são muito próximos do que foi analisado para o horizonte 3, porém, a baixa taxa de casos non-fitting foi afetada para a configuração que utiliza o conjunto de treino e validação 80% e 20% respectivamente onde a taxa inverteu em comparação com o horizonte 3 deixando assim a configuração que utiliza o conjunto de treino e validação 70% e 30% com melhor desempenho em termos de resultado do erro RMSPE, inclusive, a abstração SEQ também mostrou um bom resultado em comparação com as demais abstrações nesse horizonte.
+
+Os cortes realizados após a definição da quantidade máxima de eventos dentro de um case fez com que o case chegasse a ter em média 5 eventos, explicando resultados muito próximos, até iguais, para os horizontes 5, 6, 7 e Inf.
 
 ### RMSPE
 
